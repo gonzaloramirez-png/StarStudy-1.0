@@ -49,75 +49,81 @@
 ## Tecnologías
 
 | Capa | Tecnología |
-|---|---|
+|----|-----|
 | Backend | Django 6.0.6 |
 | Frontend | Bootstrap 5.3 + Bootstrap Icons |
 | Base de datos | SQLite (desarrollo) / PostgreSQL (producción) |
 | Cache | Django LocMem Cache |
 | Notificaciones | APScheduler |
-| Python | 3.14+ |
+| Python | 3.12+ |
 
 ---
 
 ## Instalación
 
-### Requisitos previos
-
-- Python 3.10 o superior
-- pip
-- git
-
-### Windows
+### Opción rápida (recomendada)
 
 ```powershell
-# Clonar el repositorio
-git clone https://github.com/chaloramirezzuniga-png/StarStudy.git
-cd StarStudy
+# 1. Clonar el repositorio
+git clone https://github.com/chaloramirezzuniga-png/StarStudy-1.0.git
+cd StarStudy-1.0
 
-# Crear entorno virtual
-python -m venv venv
+# 2. Activar entorno virtual (ya incluido)
+.\venv\Scripts\activate
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Iniciar (aplica migraciones y abre el navegador automáticamente)
+python run.py
+```
+
+### Instalación paso a paso
+
+**Requisitos:**
+- Python 3.12+ instalado
+- Git instalado
+
+**Windows (PowerShell):**
+```powershell
+# Clonar
+git clone https://github.com/chaloramirezzuniga-png/StarStudy-1.0.git
+cd StarStudy-1.0
+
+# Activar entorno virtual
 .\venv\Scripts\activate
 
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Aplicar migraciones
-python manage.py migrate
-
-# Crear usuario administrador (opcional)
-python manage.py createsuperuser
-
 # Iniciar servidor
 python run.py
 ```
 
-### Linux / macOS
-
+**Linux / macOS (Terminal):**
 ```bash
-# Clonar el repositorio
-git clone https://github.com/chaloramirezzuniga-png/StarStudy.git
-cd StarStudy
+# Clonar
+git clone https://github.com/chaloramirezzuniga-png/StarStudy-1.0.git
+cd StarStudy-1.0
 
-# Crear entorno virtual
-python3 -m venv venv
+# Activar entorno virtual
 source venv/bin/activate
 
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Aplicar migraciones
-python manage.py migrate
-
-# Crear usuario administrador (opcional)
-python manage.py createsuperuser
-
 # Iniciar servidor
 python3 run.py
 ```
 
+### Qué hace `python run.py`
+1. Aplica migraciones de base de datos automáticamente
+2. Inicia el programador de tareas (recordatorios, hábitos)
+3. Abre el navegador en http://127.0.0.1:8000
+
 ### Variables de entorno (opcional)
 
-Crear un archivo `.env` en la raíz del proyecto:
+Crear archivo `.env` en la raíz:
 
 ```env
 SECRET_KEY=tu-clave-secreta-aqui
@@ -125,6 +131,14 @@ DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 TIME_ZONE=America/Argentina/Buenos_Aires
 ```
+
+### Crear admin (opcional)
+
+```powershell
+python manage.py createsuperuser
+```
+
+---
 
 ---
 
