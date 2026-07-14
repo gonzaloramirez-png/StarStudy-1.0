@@ -6,6 +6,7 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.db import transaction
 from .models import User
 
 
@@ -49,22 +50,37 @@ class RegisterForm(UserCreationForm):
                 )
         return cleaned_data
 
+    def _generate_unique_username(self, base: str, role: str) -> str:
+        """Genera username único de forma atómica dentro de transacción."""
+        username = f"{base}_{role.lower()}"
+        counter = 1
+        while True:
+            try:
+                with transaction.atomic():
+                    User.objects.select_for_update(nowait=True).filter(username=username).exists()
+            except User.DoesNotExist:
+                pass
+            if not User.objects.filter(username=username).exists():
+                return username
+            username = f"{base}_{role.lower()}_{counter}"
+            counter += 1
+
     def save(self, commit=True):
         user = super().save(commit=False)
-        base = self.cleaned_data['email'].split('@')[0]
-        role = self.cleaned_data.get('role', '')
-        username = base + '_' + role.lower()
-        counter = 1
-        user.username = username
-        while User.objects.filter(username=user.username).exists():
-            user.username = username + '_' + str(counter)
-            counter += 1
+        user.username = self._generate_unique_username(
+            self.cleaned_data['email'].split('@')[0],
+            self.cleaned_data.get('role', '')
+        )
         if commit:
-            user.save()
+            with transaction.atomic():
+                user.save()
+                code = self.cleaned_data.get('code', '').strip().upper()
+                if code and user.role == User.Role.STUDENT:
+                    teacher = User.objects.filter(code=code).exclude(role=User.Role.STUDENT).first()
+                    if teacher:
+                        user.linked_to = teacher
+                        user.save(update_fields=['linked_to'])
         return user
-
-
-class CustomLoginForm(AuthenticationForm):
     username = forms.EmailField(label='Correo electrónico',
                                 widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ejemplo@correo.com'}))
     role = forms.ChoiceField(choices=User.Role.choices, label='Rol',

@@ -5,6 +5,7 @@ El campo username del formulario se usa para el email.
 """
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
+from django.db import models
 
 
 class EmailRoleBackend(ModelBackend):
@@ -18,7 +19,11 @@ class EmailRoleBackend(ModelBackend):
             if role:
                 user = UserModel.objects.get(email=username, role=role)
             else:
-                user = UserModel.objects.filter(email=username).first()
+                # Sin rol: orden determinista por prioridad de rol
+                role_priority = ['TEACHER', 'STAFF', 'PROGRAMMER', 'STUDENT']
+                user = UserModel.objects.filter(email=username).order_by(
+                    models.Case(*[models.When(role=r, then=pos) for pos, r in enumerate(role_priority)]),
+                ).first()
 
             if user and user.check_password(password):
                 return user

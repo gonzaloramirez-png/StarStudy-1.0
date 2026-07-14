@@ -43,16 +43,16 @@
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="card text-bg-primary">
+        <div class="card bg-primary text-white">
             <div class="card-body text-center py-2 py-md-3">
                 <h6 class="mb-1 mb-md-0">Nivel {{ level }}</h6>
-                <div class="progress mt-1 mt-md-0" style="height: 12px; background: rgba(255, 255, 255, 0.1); border-radius: 6px;">
+                <div class="progress mt-1 mt-md-0" style="height: 12px; background: rgba(255, 255, 255, 0.1);">
                     <div class="progress-bar" role="progressbar"
                          style="width: {{ xp_percent }}%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 6px;"
-                         aria-valuenow="{{ xp }}" aria-valuemin="0" aria-valuemax="{{ next_level_xp }}">
+                         aria-valuenow="{{ xp_percent }}" aria-valuemin="0" aria-valuemax="100">
                     </div>
                 </div>
-                <small class="text-muted">{{ xp }}/{{ next_level_xp }} tareas para siguiente nivel</small>
+                <small class="text-white-50">{{ xp }}/{{ next_level_xp }} XP • {{ xp_needed }} tareas para siguiente nivel</small>
             </div>
         </div>
     </div>

@@ -14,10 +14,20 @@ from django.db import models
 
 
 def _get_fernet():
-    """Retorna instancia Fernet para encriptar/desencriptar tokens."""
+    """Retorna instancia Fernet para encriptar/desencriptar tokens.
+
+    Usa FERNET_KEY si está definido (recomendado para producción),
+    o deriva de SECRET_KEY como fallback (dev only).
+    Rotar SECRET_KEY invalida tokens existentes - usar FERNET_KEY persistente.
+    """
     from cryptography.fernet import Fernet
-    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    return Fernet(base64.urlsafe_b64encode(key))
+    fernet_key = getattr(settings, 'FERNET_KEY', None)
+    if fernet_key:
+        key = base64.urlsafe_b64decode(fernet_key)
+    else:
+        key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+        key = base64.urlsafe_b64encode(key)
+    return Fernet(key)
 
 
 def generate_code():
@@ -91,17 +101,20 @@ class Notification(models.Model):
 
     Se usa para alertas de tareas, bienvenida, deadlines, y hábitos.
     El conteo de no leídas se cachea y se invalida al crear/marcar como leída.
+    meta_key permite tracking idempotente (evita notificaciones duplicadas).
     """
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications')
     message = models.CharField(max_length=255)
     link = models.CharField(max_length=255, blank=True, null=True)
     is_read = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    meta_key = models.CharField(max_length=100, blank=True, default='', db_index=True)
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user', 'is_read'], name='idx_notif_user_read'),
+            models.Index(fields=['user', 'meta_key'], name='idx_notif_user_meta'),
         ]
 
     def __str__(self):

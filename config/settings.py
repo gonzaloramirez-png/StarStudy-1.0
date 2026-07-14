@@ -1,8 +1,15 @@
 """Configuración de Django para StarStudy.
 
 Configuración principal del proyecto: bases de datos (SQLite con timeout),
-cache (LocMemCache), autenticación por email+rol, zona horaria Argentina,
-seguridad (HSTS, XSS, CSRF, X-Frame-Options), y apps instaladas.
+cache (LocMemCache - solo desarrollo), autenticación por email+rol,
+zona horaria Argentina, seguridad (HSTS, XSS, CSRF, X-Frame-Options),
+y apps instaladas.
+
+Para producción:
+- Cambiar CACHES a Redis/Memcached
+- Configurar SECRET_KEY, DEBUG=False, ALLOWED_HOSTS
+- Habilitar SECURE_SSL_REDIRECT, SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE
+- Configurar SECURE_HSTS_SECONDS >= 31536000 (1 año)
 """
 from pathlib import Path
 from dotenv import load_dotenv
@@ -12,7 +19,10 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-cambiar-en-produccion')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError('SECRET_KEY no configurada. Definí SECRET_KEY en .env o variables de entorno.')
+
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
@@ -29,16 +39,21 @@ INSTALLED_APPS = [
     'apps.schedule',
 ]
 
-try:
-    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', 0))
-except (ValueError, TypeError):
-    SECURE_HSTS_SECONDS = 0
-SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True'
-SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
-SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
-CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
+# Seguridad - Valores por defecto seguros para producción
+# En desarrollo (.env): DEBUG=True, SECURE_SSL_REDIRECT=False, etc.
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'True') == 'True'
+SECURE_HSTS_PRELOAD = os.getenv('SECURE_HSTS_PRELOAD', 'True') == 'True'
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True' if not DEBUG else 'False') == 'True'
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True' if not DEBUG else 'False') == 'True'
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True' if not DEBUG else 'False') == 'True'
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+
+# Fernet key para encriptar tokens GitHub (persistente, no rotar con SECRET_KEY)
+# Generar con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FERNET_KEY = os.getenv('FERNET_KEY')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -114,6 +129,8 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
+# Cache - LocMemCache solo para desarrollo (no funciona en multi-proceso)
+# En producción usar Redis: 'BACKEND': 'django.core.cache.backends.redis.RedisCache'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
