@@ -5,3 +5,4 @@ cryptography
 reportlab
 gunicorn
 psycopg2-binary
+whitenoise
