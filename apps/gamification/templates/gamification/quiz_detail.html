@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }} - StarStudy{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-question-circle me-2"></i>{{ quiz.title }}</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'gamification:quiz_edit' quiz.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil me-1"></i>Editar</a>
+        <a href="{% url 'gamification:quiz_list' %}" class="btn btn-outline-secondary btn-sm">Volver</a>
+    </div>
+</div>
+<div class="row g-4">
+    <div class="col-12 col-md-4">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body">
+                <p class="text-muted">{{ quiz.description|default:"Sin descripción" }}</p>
+                <div class="mb-2"><strong>Curso:</strong> {{ quiz.course.name }}</div>
+                <div class="mb-2"><strong>XP:</strong> {{ quiz.xp_reward }}</div>
+                <div class="mb-2"><strong>Nota mínima:</strong> {{ quiz.passing_score }}%</div>
+                <div class="mb-2"><strong>Límite tiempo:</strong> {% if quiz.time_limit %}{{ quiz.time_limit }} min{% else %}Sin límite{% endif %}</div>
+                <div class="mb-2"><strong>Máx. intentos:</strong> {% if quiz.max_attempts %}{{ quiz.max_attempts }}{% else %}Ilimitados{% endif %}</div>
+                <div class="mb-2"><strong>Preguntas:</strong> {{ questions.count }}</div>
+                <div class="mb-2"><strong>Estado:</strong> <span class="badge {% if quiz.is_active %}bg-success{% else %}bg-secondary{% endif %}">{% if quiz.is_active %}Activo{% else %}Inactivo{% endif %}</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="card bg-dark border-secondary">
+            <div class="card-header">Estadísticas</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="display-6 text-primary">{{ stats.total|default:0 }}</div>
+                        <small class="text-muted">Intentos</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="display-6 text-warning">{% if stats.avg_score %}{{ stats.avg_score|floatformat:1 }}%{% else %}-{% endif %}</div>
+                        <small class="text-muted">Promedio</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="display-6 text-success">{{ stats.passed|default:0 }}</div>
+                        <small class="text-muted">Aprobados</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<h5 class="mt-4 mb-3">Preguntas</h5>
+{% for q in questions %}
+<div class="card bg-dark border-secondary mb-3">
+    <div class="card-header d-flex justify-content-between">
+        <span>Pregunta {{ q.order }} <span class="badge bg-secondary">{{ q.points }} pts</span> <span class="badge bg-info">{{ q.get_type_display }}</span></span>
+    </div>
+    <div class="card-body">
+        <p class="mb-2">{{ q.text }}</p>
+        {% for c in q.choices %}
+        <div class="ms-3 mb-1">
+            {% if c.is_correct %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+            {{ c.text }}
+        </div>
+        {% endfor %}
+        {% if q.explanation %}
+        <div class="mt-2 p-2 bg-dark rounded"><small class="text-info"><i class="bi bi-info-circle me-1"></i>{{ q.explanation }}</small></div>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<p class="text-muted">No hay preguntas. <a href="{% url 'gamification:quiz_edit' quiz.pk %}">Añadir preguntas</a></p>
+{% endfor %}
+{% if attempts %}
+<h5 class="mt-4 mb-3">Intentos recientes</h5>
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+        <thead><tr><th>Estudiante</th><th>Nota</th><th>Estado</th><th>XP</th><th>Fecha</th></tr></thead>
+        <tbody>
+        {% for a in attempts %}
+        <tr>
+            <td>{{ a.student.get_full_name|default:a.student.email }}</td>
+            <td><span class="badge {% if a.passed %}bg-success{% else %}bg-danger{% endif %}">{{ a.score }}%</span></td>
+            <td>{% if a.passed %}Aprobado{% else %}Reprobado{% endif %}</td>
+            <td>{{ a.xp_earned }}</td>
+            <td>{{ a.submitted_at|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

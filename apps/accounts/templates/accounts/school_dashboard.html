@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Escolar - StarStudy{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white mb-0"><i class="bi bi-building me-2"></i>Dashboard Escolar</h4>
+        <a href="{% url 'manage_teachers' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-people me-1"></i>Gestionar Profesores
+        </a>
+    </div>
+
+    <!-- Stats principales -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-primary h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 text-primary">{{ total_users }}</div>
+                    <small class="text-muted">Usuarios totales</small>
+                    <br><small class="text-success">+{{ new_users_month }} este mes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-success h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 text-success">{{ total_teachers }}</div>
+                    <small class="text-muted">Profesores</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-info h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 text-info">{{ total_students }}</div>
+                    <small class="text-muted">Estudiantes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-warning h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 text-warning">{{ total_courses }}</div>
+                    <small class="text-muted">Cursos activos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendimiento global -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Rendimiento Global (30 días)</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Tasa de completación</span>
+                        <span class="badge bg-success fs-6">{{ completion_rate }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar bg-success" style="width: {{ completion_rate }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Nota promedio global</span>
+                        <span class="badge bg-warning text-dark fs-6">{{ avg_score }}%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar bg-warning" style="width: {{ avg_score }}%"></div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>Tareas totales</span>
+                        <span>{{ total_tasks }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Completadas</span>
+                        <span class="text-success">{{ completed_tasks }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header"><i class="bi bi-people me-2"></i>Estudiantes por Curso</div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    {% for item in students_per_course %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ item.course.name }}</span>
+                        <span class="badge bg-info">{{ item.student_count }} estudiantes</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-info" style="width: {% widthratio item.student_count total_students 100 %}%"></div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No hay cursos activos</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividad reciente -->
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header"><i class="bi bi-clock-history me-2"></i>Cursos Recientes</div>
+                <div class="card-body">
+                    {% for course in recent_courses %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ course.name }}</span>
+                        <small class="text-muted">{{ course.created_at|date:"d/m/Y" }}</small>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">Sin cursos recientes</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header"><i class="bi bi-person-check me-2"></i>Profesores Recientes</div>
+                <div class="card-body">
+                    {% for teacher in recent_teachers %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ teacher.get_full_name|default:teacher.email }}</span>
+                        <small class="text-muted">{{ teacher.date_joined|date:"d/m/Y" }}</small>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">Sin profesores recientes</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

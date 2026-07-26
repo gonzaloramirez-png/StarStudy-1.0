@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Día - StarStudy{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="text-white mb-0">
+                <i class="bi bi-calendar-day me-2"></i>Mi Día
+            </h4>
+            <small class="text-muted">{{ today|date:"l d \d\e F, Y" }}</small>
+        </div>
+        <div class="d-flex gap-3">
+            <div class="text-center">
+                <span class="badge bg-danger fs-6">{{ overdue_count }}</span>
+                <br><small class="text-muted">Vencidas</small>
+            </div>
+            <div class="text-center">
+                <span class="badge bg-warning text-dark fs-6">{{ total_pending }}</span>
+                <br><small class="text-muted">Pendientes</small>
+            </div>
+            <div class="text-center">
+                <span class="badge bg-success fs-6">{{ completed_count }}</span>
+                <br><small class="text-muted">Completadas</small>
+            </div>
+            <div class="text-center">
+                <span class="badge bg-info fs-6">{{ xp_today }}</span>
+                <br><small class="text-muted">XP hoy</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="row g-3">
+        <!-- URGENTE -->
+        <div class="col-12 col-md-4">
+            <div class="card h-100 bg-dark border-danger">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Urgente</h6>
+                    <span class="badge bg-white text-danger">{{ urgent|length }}</span>
+                </div>
+                <div class="card-body p-2 kanban-body">
+                    {% for task in urgent %}
+                    <div class="card bg-secondary-subtle border-secondary mb-2 kanban-card" draggable="true" data-task-id="{{ task.pk }}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <a href="{% url 'task_detail' task.pk %}" class="text-white text-decoration-none fw-bold small">{{ task.title }}</a>
+                                {% if task.importance == 'CRITICAL' %}
+                                <span class="badge bg-danger" style="font-size: 0.6rem;">CRÍTICA</span>
+                                {% elif task.importance == 'HIGH' %}
+                                <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">ALTA</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted d-block mb-1">
+                                {% if task.course %}{{ task.course.name }} · {% endif %}
+                                {{ task.deadline|date:"d/m H:i" }}
+                            </small>
+                            {% if task.deadline < now %}
+                            <span class="badge bg-danger" style="font-size: 0.6rem;">VENCIDA</span>
+                            {% endif %}
+                            <div class="d-flex justify-content-end mt-1">
+                                <form method="post" action="{% url 'task_complete' task.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.7rem;">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle display-4"></i>
+                        <p class="mt-2 mb-0">Sin tareas urgentes</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ESTA SEMANA -->
+        <div class="col-12 col-md-4">
+            <div class="card h-100 bg-dark border-warning">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-calendar-week me-2"></i>Esta Semana</h6>
+                    <span class="badge bg-dark text-warning">{{ this_week|length }}</span>
+                </div>
+                <div class="card-body p-2 kanban-body">
+                    {% for task in this_week %}
+                    <div class="card bg-secondary-subtle border-secondary mb-2 kanban-card" draggable="true" data-task-id="{{ task.pk }}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <a href="{% url 'task_detail' task.pk %}" class="text-white text-decoration-none fw-bold small">{{ task.title }}</a>
+                                {% if task.importance == 'HIGH' %}
+                                <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">ALTA</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted d-block mb-1">
+                                {% if task.course %}{{ task.course.name }} · {% endif %}
+                                {{ task.deadline|date:"d/m H:i" }}
+                            </small>
+                            <div class="d-flex justify-content-end mt-1">
+                                <form method="post" action="{% url 'task_complete' task.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.7rem;">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-check display-4"></i>
+                        <p class="mt-2 mb-0">Nada esta semana</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- LARGO PLAZO -->
+        <div class="col-12 col-md-4">
+            <div class="card h-100 bg-dark border-info">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Largo Plazo</h6>
+                    <span class="badge bg-white text-info">{{ long_term|length }}</span>
+                </div>
+                <div class="card-body p-2 kanban-body">
+                    {% for task in long_term %}
+                    <div class="card bg-secondary-subtle border-secondary mb-2 kanban-card" draggable="true" data-task-id="{{ task.pk }}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <a href="{% url 'task_detail' task.pk %}" class="text-white text-decoration-none fw-bold small">{{ task.title }}</a>
+                            </div>
+                            <small class="text-muted d-block mb-1">
+                                {% if task.course %}{{ task.course.name }} · {% endif %}
+                                {{ task.deadline|date:"d/m" }}
+                            </small>
+                            <div class="d-flex justify-content-end mt-1">
+                                <form method="post" action="{% url 'task_complete' task.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.7rem;">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar display-4"></i>
+                        <p class="mt-2 mb-0">Nada programado</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completadas hoy -->
+    {% if completed_today %}
+    <div class="card bg-dark border-success mt-3">
+        <div class="card-header bg-success text-white">
+            <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Completadas Hoy</h6>
+        </div>
+        <div class="card-body p-2">
+            <div class="d-flex flex-wrap gap-2">
+                {% for task in completed_today %}
+                <span class="badge bg-secondary text-success">
+                    <i class="bi bi-check-lg me-1"></i>{{ task.title }}
+                    {% if task.score %} · {{ task.score }}%{% endif %}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.kanban-body {
+    max-height: 50vh;
+    overflow-y: auto;
+    min-height: 150px;
+}
+.kanban-card {
+    cursor: grab;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+.kanban-body.drag-over {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.kanban-card');
+    const bodies = document.querySelectorAll('.kanban-body');
+
+    cards.forEach(card => {
+        card.addEventListener('dragstart', e => {
+            card.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', card.dataset.taskId);
+        });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    });
+
+    bodies.forEach(body => {
+        body.addEventListener('dragover', e => {
+            e.preventDefault();
+            body.classList.add('drag-over');
+        });
+        body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+        body.addEventListener('drop', e => {
+            e.preventDefault();
+            body.classList.remove('drag-over');
+            const dragging = document.querySelector('.dragging');
+            if (dragging) body.appendChild(dragging);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Quizzes - StarStudy{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-question-circle me-2"></i>Mis Quizzes</h2>
+    <a href="{% url 'gamification:quiz_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Crear Quiz
+    </a>
+</div>
+
+<!-- Filtro por curso -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <select name="course" class="form-select">
+                    <option value="">Todos los cursos</option>
+                    {% for tc in courses %}
+                    <option value="{{ tc.course.pk }}" {% if current_course == tc.course.pk %}selected{% endif %}>
+                        {{ tc.course.name }} ({{ tc.course.academic_year }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+            </div>
+            {% if current_course %}
+            <div class="col-md-2">
+                <a href="{% url 'gamification:quiz_list' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if quizzes %}
+<div class="row g-3">
+    {% for quiz in quizzes %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 {% if not quiz.is_active %}border-warning{% endif %}">
+            <div class="card-header d-flex justify-content-between align-items-center {% if not quiz.is_active %}bg-warning text-dark{% endif %}">
+                <h6 class="mb-0">{{ quiz.title }}</h6>
+                <span class="badge {% if quiz.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if quiz.is_active %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">{{ quiz.description|truncatewords:15|default:"Sin descripción" }}</p>
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="fw-bold text-primary">{{ quiz.xp_reward }}</div>
+                        <small class="text-muted">XP Recompensa</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-warning">{{ quiz.passing_score }}%</div>
+                        <small class="text-muted">Nota mínima</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold text-info">{{ quiz.questions.count }}</div>
+                        <small class="text-muted">Preguntas</small>
+                    </div>
+                </div>
+                {% if quiz.course %}
+                <div class="badge bg-info mb-2">{{ quiz.course.name }}</div>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'gamification:quiz_detail' quiz.pk %}" class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="bi bi-eye me-1"></i>Ver
+                    </a>
+                    <a href="{% url 'gamification:quiz_edit' quiz.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <small class="text-muted">Creado: {{ quiz.created_at|date:"d/m/Y" }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-question-circle" style="font-size: 4rem; color: var(--border);"></i>
+    <h4 class="mt-3 text-muted">No hay quizzes aún</h4>
+    <p class="text-muted">Crea tu primer quiz autocorregible para asignar XP automático.</p>
+    <a href="{% url 'gamification:quiz_create' %}" class="btn btn-primary mt-2">
+        <i class="bi bi-plus-lg me-1"></i>Crear Quiz
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

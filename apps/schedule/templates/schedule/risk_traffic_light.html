@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}Semáforo de Riesgo - {{ course.name }} - StarStudy{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'courses:course_list' %}">Mis Cursos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item active">Semáforo de Riesgo</li>
+            </ol>
+        </nav>
+        <h2 class="mb-0"><i class="bi bi-traffic-light me-2"></i>Semáforo de Riesgo: {{ course.name }}</h2>
+    </div>
+    <div class="btn-group">
+        <button class="btn btn-outline-success" onclick="autoCalculate()" id="autoCalcBtn">
+            <i class="bi bi-magic me-1"></i>Calcular automático
+        </button>
+        <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card text-bg-success">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.green }}</h3>
+                <small>Verde (Sin riesgo)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-bg-warning">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.yellow }}</h3>
+                <small>Amarillo (Atención)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-bg-danger">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.red }}</h3>
+                <small>Rojo (Riesgo alto)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de semáforos -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Estudiantes</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Estudiante</th>
+                        <th class="text-center" style="width: 120px;">Nivel de riesgo</th>
+                        <th>Motivos</th>
+                        <th class="text-center" style="width: 100px;">Actualizado por</th>
+                        <th class="text-center" style="width: 140px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for risk in risk_lights %}
+                    <tr id="risk-row-{{ risk.student.pk }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle bg-primary text-white me-2" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    {{ risk.student.get_full_name|first|upper|default:risk.student.email|first|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ risk.student.get_full_name|default:risk.student.email }}</strong>
+                                    <br><small class="text-muted">{{ risk.student.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge fs-6 {{ risk.get_badge_class }}" id="badge-{{ risk.student.pk }}">
+                                <i class="bi bi-circle-fill me-1"></i>{{ risk.get_level_display }}
+                            </span>
+                            {% if risk.auto_calculated %}
+                            <span class="badge bg-light text-dark ms-1" title="Calculado automáticamente">
+                                <i class="bi bi-cpu"></i> Auto
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ risk.reasons|default:"Sin motivos registrados" }}</small>
+                        </td>
+                        <td class="text-center">
+                            <small class="text-muted">
+                                {% if risk.updated_by %}
+                                {{ risk.updated_by.get_full_name|default:risk.updated_by.email }}
+                                {% else %}
+                                —
+                                {% endif %}
+                                {% if risk.updated_at %}
+                                <br>{{ risk.updated_at|date:"d/m/Y H:i" }}
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-success {% if risk.level == 'GREEN' %}active{% endif %}"
+                                        onclick="updateRisk({{ risk.student.pk }}, 'GREEN')" title="Verde">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                                <button class="btn btn-outline-warning {% if risk.level == 'YELLOW' %}active{% endif %}"
+                                        onclick="updateRisk({{ risk.student.pk }}, 'YELLOW')" title="Amarillo">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </button>
+                                <button class="btn btn-outline-danger {% if risk.level == 'RED' %}active{% endif %}"
+                                        onclick="updateRisk({{ risk.student.pk }}, 'RED')" title="Rojo">
+                                    <i class="bi bi-x-octagon"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">No hay estudiantes inscritos en este curso.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateRisk(studentPk, level) {
+    const reasons = prompt(`Motivos para nivel ${level === 'GREEN' ? 'Verde' : level === 'YELLOW' ? 'Amarillo' : 'Rojo'}:`);
+
+    fetch(`{% url 'risk_update' course.pk 0 %}`.replace('0', studentPk), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ level, reasons: reasons || '' })
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            const badge = document.getElementById(`badge-${studentPk}`);
+            badge.className = `badge fs-6 ${data.badge_class}`;
+            badge.innerHTML = `<i class="bi bi-circle-fill me-1"></i>${data.level}`;
+
+            // Actualizar botones activos
+            const row = document.getElementById(`risk-row-${studentPk}`);
+            row.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = row.querySelector(`button[onclick*="${level}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            showToast(`Nivel actualizado a ${data.level}`, 'success');
+        } else {
+            showToast(data.error || 'Error al actualizar', 'danger');
+        }
+    });
+}
+
+function autoCalculate() {
+    const btn = document.getElementById('autoCalcBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Calculando...';
+
+    fetch(`{% url 'risk_auto_calculate' course.pk %}`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    }).then(r => r.json()).then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (data.success) {
+            showToast(`${data.updated} semáforos actualizados automáticamente`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error', 'danger');
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    container.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+</script>
+{% endblock %}

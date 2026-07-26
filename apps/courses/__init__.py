@@ -1,0 +1,1 @@
+"""Courses app: Gestión de cursos, códigos de invitación y asignaciones docente-curso."""

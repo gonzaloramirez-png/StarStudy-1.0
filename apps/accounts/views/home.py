@@ -10,6 +10,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.accounts.cache import get_home_stats, invalidate_home
 from apps.tasks.models import Task
+from apps.courses.models import Course, TeacherCourse, StudentCourse
 
 
 @login_required
@@ -17,6 +18,30 @@ def home(request):
     user = request.user
     now = timezone.now()
     is_student = user.role == User.Role.STUDENT
+
+    # Cursos del usuario para el selector en navbar
+    if user.role in [User.Role.TEACHER, User.Role.STAFF, User.Role.PROGRAMMER, User.Role.ADMIN, User.Role.SCHOOL_ADMIN]:
+        user_courses = Course.objects.filter(
+            teacher_assignments__teacher=user,
+            status=Course.Status.ACTIVE
+        ).distinct().order_by('-created_at')
+    elif is_student:
+        user_courses = Course.objects.filter(
+            student_enrollments__student=user,
+            student_enrollments__status=StudentCourse.Status.ACTIVE
+        ).distinct().order_by('-created_at')
+    else:
+        user_courses = Course.objects.none()
+
+    # Curso seleccionado (desde query param o sesión)
+    selected_course_pk = request.GET.get('course') or request.session.get('selected_course')
+    selected_course = None
+    if selected_course_pk:
+        try:
+            selected_course = user_courses.get(pk=selected_course_pk)
+            request.session['selected_course'] = selected_course.pk
+        except Course.DoesNotExist:
+            pass
 
     def fetch_stats():
         HOME_FIELDS = ['id', 'title', 'importance', 'deadline', 'is_completed', 'is_personal', 'assigned_to_id', 'assigned_by_id']
@@ -27,6 +52,10 @@ def home(request):
         else:
             all_tasks = Task.objects.select_related('assigned_to', 'assigned_by').only(*HOME_FIELDS).filter(assigned_by=user)
             base_tasks = all_tasks.filter(is_personal=False)
+
+        # Si hay curso seleccionado, filtrar tareas de ese curso
+        if selected_course:
+            base_tasks = base_tasks.filter(course=selected_course)
 
         counts = base_tasks.aggregate(
             pending=Count('id', filter=Q(is_completed=False)),
@@ -61,6 +90,8 @@ def home(request):
         'next_level_xp': 5,
         'completed_count': completed_count,
         'personal_count': stats['personal'],
+        'user_courses': user_courses,
+        'selected_course': selected_course,
     }
 
     return render(request, 'home.html', context)

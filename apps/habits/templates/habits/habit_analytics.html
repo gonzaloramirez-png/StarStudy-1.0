@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Métricas - StarStudy{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h4 class="text-white mb-4"><i class="bi bi-graph-up me-2"></i>Mis Métricas Personales</h4>
+
+    <!-- Stats principales -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-primary h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-primary">{{ delivery_rate }}%</div>
+                    <small class="text-muted">Tasa de entrega</small>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar bg-primary" style="width: {{ delivery_rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-success h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-success">{{ on_time_rate }}%</div>
+                    <small class="text-muted">Puntualidad</small>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar bg-success" style="width: {{ on_time_rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-warning h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-warning">{{ avg_score }}</div>
+                    <small class="text-muted">Nota promedio</small>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar bg-warning" style="width: {{ avg_score }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-dark border-info h-100">
+                <div class="card-body text-center">
+                    <div class="display-6 text-info">{{ xp_30d }}</div>
+                    <small class="text-muted">XP últimos 30 días</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Resumen de tareas -->
+        <div class="col-12 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header"><i class="bi bi-list-task me-2"></i>Últimos 30 días</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total asignadas</span>
+                        <span class="badge bg-secondary">{{ tasks_30d }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Completadas</span>
+                        <span class="badge bg-success">{{ tasks_completed_30d }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Vencidas</span>
+                        <span class="badge bg-danger">{{ tasks_overdue_30d }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>XP última semana</span>
+                        <span class="badge bg-info">{{ xp_7d }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Racha de hábitos -->
+        <div class="col-12 col-md-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header"><i class="bi bi-fire me-2"></i>Racha de Hábitos</div>
+                <div class="card-body text-center">
+                    <div class="display-1 text-warning">{{ streak }}</div>
+                    <p class="text-muted">días consecutivos con hábitos completados</p>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        {% for i in "1234567" %}
+                        <div class="rounded-circle {% if forloop.counter <= streak %}bg-success{% else %}bg-secondary{% endif %}" style="width: 30px; height: 30px;"></div>
+                        {% endfor %}
+                    </div>
+                    <small class="text-muted mt-2 d-block">Últimos 7 días</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hábitos individuales -->
+    {% if habit_stats %}
+    <div class="card bg-dark border-secondary mt-3">
+        <div class="card-header"><i class="bi bi-star me-2"></i>Progreso de Hábitos (30 días)</div>
+        <div class="card-body">
+            <div class="row g-3">
+                {% for hs in habit_stats %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="me-2">{{ hs.habit.title }}</span>
+                        <span class="badge bg-info">{{ hs.completions_last_30 }}/30</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ hs.rate }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ hs.rate }}% completado</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- XP por curso -->
+    {% if course_xp %}
+    <div class="card bg-dark border-secondary mt-3">
+        <div class="card-header"><i class="bi bi-book me-2"></i>XP por Curso</div>
+        <div class="card-body">
+            <div class="row g-3">
+                {% for cx in course_xp %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card bg-secondary-subtle border-secondary">
+                        <div class="card-body">
+                            <h6 class="text-white mb-1">{{ cx.course.name }}</h6>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-info">{{ cx.xp }} XP</span>
+                                <span class="badge bg-primary">Nivel {{ cx.level }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

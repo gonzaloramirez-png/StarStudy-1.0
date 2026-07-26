@@ -1,0 +1,655 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ course.name }} - StarStudy{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'courses:course_list' %}">Mis Cursos</a></li>
+                <li class="breadcrumb-item active">{{ course.name }}</li>
+            </ol>
+        </nav>
+        <h2 class="mb-0">
+            {{ course.name }}
+            <span class="badge {% if course.status == 'ACTIVE' %}bg-success{% else %}bg-warning text-dark{% endif %} ms-2">
+                {{ course.get_status_display }}
+            </span>
+        </h2>
+    </div>
+    {% if is_teacher %}
+    <div class="btn-group">
+        <a href="{% url 'courses:course_edit' course.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        <div class="btn-group dropstart">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-three-dots"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                {% if course.status == 'ACTIVE' %}
+                <li><button class="dropdown-item text-danger" onclick="archiveCourse({{ course.pk }})">
+                    <i class="bi bi-archive me-2"></i>Archivar
+                </button></li>
+                {% else %}
+                <li><button class="dropdown-item text-success" onclick="archiveCourse({{ course.pk }})">
+                    <i class="bi bi-archive-fill me-2"></i>Restaurar
+                </button></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item text-danger" onclick="confirmDelete({{ course.pk }})">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button></li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="courseTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" role="tab">
+            <i class="bi bi-info-circle me-1"></i>Información
+        </button>
+    </li>
+    {% if is_teacher %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" role="tab">
+            <i class="bi bi-people me-1"></i>Estudiantes ({{ students|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" role="tab">
+            <i class="bi bi-person-badge me-1"></i>Profesores
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="invite-tab" data-bs-toggle="tab" data-bs-target="#invite" role="tab">
+            <i class="bi bi-qr-code me-1"></i>Invitación
+        </button>
+    </li>
+    {% endif %}
+</ul>
+
+<div class="tab-content" id="courseTabsContent">
+
+    <!-- Pestaña Información -->
+    <div class="tab-pane fade show active" id="info" role="tabpanel">
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Detalles del curso</div>
+                    <div class="card-body">
+                        <p>{{ course.description|linebreaks|default:"Sin descripción" }}</p>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Año lectivo:</strong> {{ course.academic_year }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Creado por:</strong> {{ course.created_by.get_full_name|default:course.created_by.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Creado:</strong> {{ course.created_at|date:"d/m/Y H:i" }}
+                            </div>
+                            {% if course.archived_at %}
+                            <div class="col-md-6">
+                                <strong>Archivado:</strong> {{ course.archived_at|date:"d/m/Y H:i" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Estadísticas</div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="fw-bold fs-4 text-primary">{{ course.student_count }}</div>
+                                <small class="text-muted">Estudiantes</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-4 text-success">{{ course.teacher_count }}</div>
+                                <small class="text-muted">Profesores</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-4 text-info">{{ course.schedule_entries.count }}</div>
+                                <small class="text-muted">Horarios</small>
+                            </div>
+                        </div>
+                        {% if is_student %}
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Estás inscrito como estudiante en este curso.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if is_teacher %}
+    <!-- Pestaña Estudiantes -->
+    <div class="tab-pane fade" id="students" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Lista de estudiantes</h5>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#enrollModal">
+                <i class="bi bi-person-plus me-1"></i>Inscribir estudiante
+            </button>
+        </div>
+
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Email</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-center">Inscrito</th>
+                        <th class="text-center">Vía</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in students %}
+                    <tr id="student-row-{{ enrollment.pk }}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle bg-primary text-white me-2" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    {{ enrollment.student.get_full_name|first|upper|default:enrollment.student.email|first|upper }}
+                                </div>
+                                <strong>{{ enrollment.student.get_full_name|default:enrollment.student.email }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ enrollment.student.email }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if enrollment.status == 'ACTIVE' %}bg-success{% elif enrollment.status == 'BLOCKED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {{ enrollment.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-center">{{ enrollment.enrolled_at|date:"d/m/Y" }}</td>
+                        <td class="text-center">
+                            {% if enrollment.enrolled_via_code %}
+                            <span class="badge bg-info" title="Código: {{ enrollment.enrolled_via_code.code }}">
+                                <i class="bi bi-qr-code me-1"></i>Código
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">Manual</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                {% if enrollment.status == 'ACTIVE' %}
+                                <button class="btn btn-outline-warning" onclick="updateStudentStatus({{ enrollment.pk }}, 'block')"
+                                        title="Bloquear"><i class="bi bi-slash-circle"></i></button>
+                                <button class="btn btn-outline-danger" onclick="updateStudentStatus({{ enrollment.pk }}, 'withdraw')"
+                                        title="Retirar"><i class="bi bi-door-open"></i></button>
+                                {% elif enrollment.status == 'BLOCKED' %}
+                                <button class="btn btn-outline-success" onclick="updateStudentStatus({{ enrollment.pk }}, 'activate')"
+                                        title="Activar"><i class="bi bi-check-circle"></i></button>
+                                <button class="btn btn-outline-danger" onclick="updateStudentStatus({{ enrollment.pk }}, 'withdraw')"
+                                        title="Retirar"><i class="bi bi-door-open"></i></button>
+                                {% else %}
+                                <button class="btn btn-outline-success" onclick="updateStudentStatus({{ enrollment.pk }}, 'activate')"
+                                        title="Reactivar"><i class="bi bi-arrow-clockwise"></i></button>
+                                {% endif %}
+                                <button class="btn btn-outline-secondary" onclick="removeStudent({{ enrollment.pk }})"
+                                        title="Eliminar inscripción"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people" style="font-size: 3rem; color: var(--border);"></i>
+            <h5 class="mt-3 text-muted">No hay estudiantes inscritos</h5>
+            <p class="text-muted">Comparte el código de invitación para que los estudiantes se inscriban.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pestaña Profesores -->
+    <div class="tab-pane fade" id="teachers" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Profesores asignados</h5>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTeacherModal">
+                <i class="bi bi-person-plus me-1"></i>Añadir profesor
+            </button>
+        </div>
+
+        <div class="row g-3">
+            {% for tc in teachers %}
+            <div class="col-md-6">
+                <div class="card h-100 {% if tc.role == 'TITULAR' %}border-primary{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong>{{ tc.teacher.get_full_name|default:tc.teacher.email }}</strong>
+                                    {% if tc.role == 'TITULAR' %}
+                                    <span class="badge bg-primary">Titular</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Asistente</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ tc.teacher.email }}</small>
+                                {% if tc.assigned_by %}
+                                <div class="text-muted small mt-1">Asignado por: {{ tc.assigned_by.get_full_name|default:tc.assigned_by.email }}</div>
+                                {% endif %}
+                            </div>
+                            {% if tc.teacher != request.user %}
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if tc.role == 'ASISTENTE' %}
+                                    <li><button class="dropdown-item" onclick="updateTeacherRole({{ tc.pk }}, 'TITULAR')">
+                                        <i class="bi bi-star me-2"></i>Hacer titular
+                                    </button></li>
+                                    {% else %}
+                                    <li><button class="dropdown-item" onclick="updateTeacherRole({{ tc.pk }}, 'ASISTENTE')">
+                                        <i class="bi bi-person me-2"></i>Cambiar a asistente
+                                    </button></li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item text-danger" onclick="removeTeacher({{ tc.pk }})">
+                                        <i class="bi bi-person-dash me-2"></i>Remover
+                                    </button></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not teachers %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-person-badge" style="font-size: 2rem;"></i>
+            <p class="mt-2">Eres el único profesor en este curso.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pestaña Invitación -->
+    <div class="tab-pane fade" id="invite" role="tabpanel">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Código de invitación</h5>
+                        {% if invite_code %}
+                        <span class="badge {% if invite_code.status == 'OPEN' %}bg-success{% elif invite_code.status == 'CLOSED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ invite_code.get_status_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body text-center py-5">
+                        {% if invite_code %}
+                        <div class="mb-4">
+                            <code id="inviteCodeDisplay" class="fs-1 fw-bold text-monospace letter-spacing-3"
+                                  style="background: var(--bg-tertiary); padding: 1rem 2rem; border-radius: 12px; border: 2px dashed var(--accent);">
+                                {{ invite_code.code }}
+                            </code>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted">Usos: {{ invite_code.current_uses }}{% if invite_code.max_uses > 0 %}/{{ invite_code.max_uses }}{% else %} (ilimitado){% endif %}</small>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <button class="btn btn-primary" onclick="copyCode('{{ invite_code.code }}')">
+                                <i class="bi bi-clipboard me-1"></i>Copiar
+                            </button>
+                            {% if invite_code.status == 'OPEN' %}
+                            <button class="btn btn-outline-warning" onclick="toggleInviteCode({{ course.pk }}, 'close')">
+                                <i class="bi bi-lock me-1"></i>Cerrar
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="regenerateInviteCode({{ course.pk }})">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Regenerar
+                            </button>
+                            {% elif invite_code.status == 'CLOSED' %}
+                            <button class="btn btn-outline-success" onclick="toggleInviteCode({{ course.pk }}, 'open')">
+                                <i class="bi bi-unlock me-1"></i>Reabrir
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="regenerateInviteCode({{ course.pk }})">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Regenerar
+                            </button>
+                            {% else %}
+                            <button class="btn btn-outline-secondary" onclick="regenerateInviteCode({{ course.pk }})">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Generar nuevo
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="text-muted mb-3">
+                            <i class="bi bi-qr-code" style="font-size: 3rem;"></i>
+                            <p class="mt-2">No hay código generado aún.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="regenerateInviteCode({{ course.pk }})">
+                            <i class="bi bi-plus-lg me-1"></i>Generar código
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Enlace de invitación directa</div>
+                    <div class="card-body">
+                        {% if invite_code %}
+                        <div class="mb-3">
+                            <label class="form-label">URL para compartir</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="inviteUrl" readonly
+                                       value="{{ request.scheme }}://{{ request.get_host }}{% url 'join' invite_code.code %}">
+                                <button class="btn btn-outline-secondary" onclick="copyUrl()">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Código QR</label>
+                            <div class="text-center">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ request.scheme }}://{{ request.get_host }}{% url 'join' invite_code.code %}"
+                                     alt="QR código de invitación" class="border rounded p-2" style="max-width: 200px;">
+                            </div>
+                        </div>
+                        <div class="alert alert-info small mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Los estudiantes pueden usar el código en la página de registro o escanear el QR / abrir el enlace directo.
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center py-4">Genera un código para obtener el enlace y QR.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Inscribir Estudiante -->
+<div class="modal fade" id="enrollModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Inscribir estudiante manualmente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="enrollForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Email del estudiante</label>
+                        <input type="email" name="email" class="form-control" required placeholder="estudiante@ejemplo.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol en el curso</label>
+                        <select name="role" class="form-select" disabled>
+                            <option value="STUDENT" selected>Estudiante</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Inscribir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asignar Profesor -->
+<div class="modal fade" id="assignTeacherModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Añadir profesor asistente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assignTeacherForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Email del profesor</label>
+                        <input type="email" name="teacher_email" class="form-control" required placeholder="profesor@ejemplo.com">
+                        <small class="text-muted">Debe ser un usuario con rol Profesor o Personal.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol</label>
+                        <select name="role" class="form-select">
+                            <option value="ASISTENTE">Asistente</option>
+                            <option value="TITULAR">Titular (solo si no hay titular)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        showToast('Código copiado al portapapeles', 'success');
+    });
+}
+
+function copyUrl() {
+    const url = document.getElementById('inviteUrl').value;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('Enlace copiado al portapapeles', 'success');
+    });
+}
+
+function regenerateInviteCode(courseId) {
+    if (confirm('¿Regenerar el código de invitación? El código anterior dejará de funcionar.')) {
+        fetch(`{% url 'courses:invite_code_regenerate' 0 %}`.replace('0', courseId), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' }
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                document.getElementById('inviteCodeDisplay').textContent = data.code;
+                showToast(`Nuevo código generado: ${data.code}`, 'success');
+                location.reload();
+            } else {
+                showToast(data.error || 'Error al regenerar', 'danger');
+            }
+        });
+    }
+}
+
+function toggleInviteCode(courseId, action) {
+    const url = action === 'close'
+        ? `{% url 'courses:invite_code_close' 0 %}`.replace('0', courseId)
+        : `{% url 'courses:invite_code_open' 0 %}`.replace('0', courseId);
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            showToast(`Código ${action === 'close' ? 'cerrado' : 'reabierto'}`, 'success');
+            location.reload();
+        } else {
+            showToast(data.error || 'Error', 'danger');
+        }
+    });
+}
+
+function updateStudentStatus(enrollmentId, action) {
+    const labels = { block: 'bloquear', activate: 'activar', withdraw: 'retirar' };
+    if (confirm(`¿Seguro que quieres ${labels[action]} a este estudiante?`)) {
+        fetch(`{% url 'courses:student_status_update' 0 %}`.replace('0', enrollmentId), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                showToast(`Estudiante ${labels[action]}do`, 'success');
+                location.reload();
+            } else {
+                showToast(data.error || 'Error', 'danger');
+            }
+        });
+    }
+}
+
+function removeStudent(enrollmentId) {
+    if (confirm('¿Eliminar la inscripción de este estudiante?')) {
+        fetch(`{% url 'courses:student_remove' 0 %}`.replace('0', enrollmentId), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                document.getElementById(`student-row-${enrollmentId}`).remove();
+            } else {
+                showToast(data.error || 'Error', 'danger');
+            }
+        });
+    }
+}
+
+function updateTeacherRole(tcId, newRole) {
+    fetch(`{% url 'courses:teacher_role_update' 0 %}`.replace('0', tcId), {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            showToast(`Rol actualizado a ${data.role}`, 'success');
+            location.reload();
+        } else {
+            showToast(data.error || 'Error', 'danger');
+        }
+    });
+}
+
+function removeTeacher(tcId) {
+    if (confirm('¿Remover a este profesor del curso?')) {
+        fetch(`{% url 'courses:teacher_remove' 0 %}`.replace('0', tcId), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                location.reload();
+            } else {
+                showToast(data.error || 'Error', 'danger');
+            }
+        });
+    }
+}
+
+function archiveCourse(courseId) {
+    const action = confirm('¿Archivar/restaurar este curso?') ? 'toggle' : '';
+    if (action) {
+        fetch(`{% url 'courses:course_archive' 0 %}`.replace('0', courseId), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                location.reload();
+            }
+        });
+    }
+}
+
+function confirmDelete(courseId) {
+    if (confirm('¿ELIMINAR permanentemente este curso? Esta acción no se puede deshacer.')) {
+        window.location.href = `{% url 'courses:course_delete' 0 %}`.replace('0', courseId);
+    }
+}
+
+// Formulario inscribir estudiante
+document.getElementById('enrollForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch(`{% url 'courses:student_add' course.pk %}`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('enrollModal')).hide();
+            location.reload();
+        } else {
+            showToast(data.error || 'Error', 'danger');
+        }
+    });
+});
+
+// Formulario asignar profesor
+document.getElementById('assignTeacherForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch(`{% url 'courses:teacher_add' course.pk %}`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            showToast(`${data.teacher} asignado como ${data.role}`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('assignTeacherModal')).hide();
+            location.reload();
+        } else {
+            showToast(data.error || 'Error', 'danger');
+        }
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+    }
+    container.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+</script>
+{% endblock %}

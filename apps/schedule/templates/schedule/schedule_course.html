@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }} - StarStudy{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-week me-2"></i>{{ page_title }}</h2>
+    {% if not readonly %}
+    <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver al curso
+    </a>
+    {% endif %}
+</div>
+
+{% if not readonly %}
+<!-- Formulario agregar entrada -->
+<div class="card mb-4">
+    <div class="card-header">Añadir entrada al horario</div>
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-2">{{ form.day.label_tag }}{{ form.day }}</div>
+            <div class="col-md-2">{{ form.start_time.label_tag }}{{ form.start_time }}</div>
+            <div class="col-md-2">{{ form.end_time.label_tag }}{{ form.end_time }}</div>
+            <div class="col-md-4">{{ form.title.label_tag }}{{ form.title }}</div>
+            <div class="col-md-2">{{ form.entry_type.label_tag }}{{ form.entry_type }}</div>
+            <div class="col-12">
+                <button type="submit" name="add" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Añadir</button>
+            </div>
+            {% if form.non_field_errors %}
+            <div class="col-12"><div class="alert alert-danger">{{ form.non_field_errors }}</div></div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla de horario -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 100px;">Hora</th>
+                {% for day_code in day_order %}
+                <th class="text-center">{{ day_labels|get_item:day_code }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for hour in time_slots %}
+            <tr>
+                <td class="fw-bold text-center text-nowrap">{{ hour }}</td>
+                {% for day_code in day_order %}
+                <td>
+                    {% with entries=schedule|get_item:day_code %}
+                    {% for entry in entries %}
+                        {% if entry.start_time <= hour|time:"H:i" and entry.end_time > hour|time:"H:i" %}
+                        <div class="schedule-entry p-1 mb-1 rounded {% if entry.entry_type == 'BREAK' %}bg-warning{% elif entry.entry_type == 'LUNCH' %}bg-info{% else %}bg-primary{% endif %} text-white"
+                             style="min-height: 40px; font-size: 0.8rem;">
+                            <strong>{{ entry.title }}</strong>
+                            {% if entry.entry_type != 'SUBJECT' %}
+                            <br><small class="badge bg-light text-dark">{{ entry.get_entry_type_display }}</small>
+                            {% endif %}
+                            {% if not readonly %}
+                            <form method="POST" style="margin:0" onsubmit="return confirm('Eliminar esta entrada?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_id" value="{{ entry.pk }}">
+                                <button type="submit" class="btn btn-sm btn-link text-white p-0" style="line-height:1"><i class="bi bi-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not schedule|length and readonly %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+    <p class="mt-2">No hay horario configurado para este curso.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Helper para obtener franjas horarias en template
+const dayOrder = {{ day_order|safe }};
+const dayLabels = {{ day_labels|safe }};
+</script>
+{% endblock %}

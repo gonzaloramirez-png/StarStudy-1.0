@@ -81,6 +81,9 @@ class RegisterForm(UserCreationForm):
                         user.linked_to = teacher
                         user.save(update_fields=['linked_to'])
         return user
+
+
+class CustomLoginForm(AuthenticationForm):
     username = forms.EmailField(label='Correo electrónico',
                                 widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ejemplo@correo.com'}))
     role = forms.ChoiceField(choices=User.Role.choices, label='Rol',

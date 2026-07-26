@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Tienda de Recompensas - StarStudy{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-shop me-2"></i>Tienda de Recompensas</h2>
+    <a href="{% url 'gamification:reward_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Crear Recompensa</a>
+</div>
+{% if rewards %}
+<div class="row g-3">
+    {% for reward in rewards %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 {% if not reward.is_active %}border-warning{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title"><i class="{{ reward.icon }} me-2"></i>{{ reward.name }}</h5>
+                <p class="text-muted">{{ reward.description|truncatewords:20|default:"Sin descripción" }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-success fs-6">{{ reward.xp_cost }} XP</span>
+                    <span class="badge bg-info">{{ reward.get_type_display }}</span>
+                </div>
+                {% if reward.max_claims > 0 %}
+                <div class="mt-2"><small class="text-muted">Disponibles: {{ reward.max_claims|add:reward.current_claims|add:"-" }}{{ reward.current_claims }}</small></div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <small class="text-muted">Creado: {{ reward.created_at|date:"d/m/Y" }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-shop" style="font-size: 4rem; color: var(--border);"></i>
+    <h4 class="mt-3 text-muted">No hay recompensas</h4>
+    <p class="text-muted">Crea recompensas canjeables por XP.</p>
+    <a href="{% url 'gamification:reward_create' %}" class="btn btn-primary mt-2"><i class="bi bi-plus-lg me-1"></i>Crear Recompensa</a>
+</div>
+{% endif %}
+{% endblock %}

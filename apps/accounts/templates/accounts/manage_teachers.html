@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Profesores - StarStudy{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white mb-0"><i class="bi bi-people me-2"></i>Gestionar Profesores</h4>
+        <a href="{% url 'school_dashboard' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Formulario de asignación -->
+    <div class="card bg-dark border-primary mb-4">
+        <div class="card-header"><i class="bi bi-plus-circle me-2"></i>Asignar Profesor a Curso</div>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="col-12 col-md-4">
+                    <label class="form-label text-muted">Profesor</label>
+                    <select name="teacher_id" class="form-select bg-dark text-white border-secondary" required>
+                        <option value="">Seleccionar profesor...</option>
+                        {% for teacher in teachers %}
+                        <option value="{{ teacher.pk }}">{{ teacher.get_full_name|default:teacher.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label text-muted">Curso</label>
+                    <select name="course_id" class="form-select bg-dark text-white border-secondary" required>
+                        <option value="">Seleccionar curso...</option>
+                        {% for course in courses %}
+                        <option value="{{ course.pk }}">{{ course.name }} ({{ course.academic_year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label text-muted">Rol</label>
+                    <select name="role" class="form-select bg-dark text-white border-secondary">
+                        {% for value, label in role_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-lg me-1"></i>Asignar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Asignaciones actuales -->
+    <div class="card bg-dark border-secondary">
+        <div class="card-header"><i class="bi bi-list-check me-2"></i>Asignaciones Actuales</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Profesor</th>
+                            <th>Curso</th>
+                            <th>Rol</th>
+                            <th>Asignado por</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in assignments %}
+                        <tr>
+                            <td>{{ assignment.teacher.get_full_name|default:assignment.teacher.email }}</td>
+                            <td>{{ assignment.course.name }}</td>
+                            <td>
+                                <span class="badge {% if assignment.role == 'TITULAR' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {{ assignment.get_role_display }}
+                                </span>
+                            </td>
+                            <td>{{ assignment.assigned_by.get_full_name|default:assignment.assigned_by.email }}</td>
+                            <td>
+                                {% if assignment.role != 'TITULAR' %}
+                                <form method="post" action="{% url 'courses:teacher_remove' assignment.course.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="teacher_pk" value="{{ assignment.teacher.pk }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Remover">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No hay asignaciones</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

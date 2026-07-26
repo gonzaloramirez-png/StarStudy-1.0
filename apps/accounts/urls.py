@@ -1,8 +1,9 @@
-"""URLs de accounts: home, auth, perfil, GitHub, notificaciones, join."""
+"""URLs de accounts: home, auth, perfil, GitHub, notificaciones, join, school admin."""
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from .forms import CustomLoginForm
+from .views.school_admin import school_dashboard, manage_teachers
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -15,4 +16,8 @@ urlpatterns = [
     path('notificaciones/', views.notification_list, name='notification_list'),
     path('notificaciones/<int:pk>/leer/', views.notification_read, name='notification_read'),
     path('join/<str:code>/', views.join, name='join'),
+
+    # School Admin
+    path('escuela/', school_dashboard, name='school_dashboard'),
+    path('escuela/profesores/', manage_teachers, name='manage_teachers'),
 ]

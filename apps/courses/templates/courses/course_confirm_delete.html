@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar {{ course.name }} - StarStudy{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar eliminación</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">¿Estás seguro de que querés eliminar el curso <strong>"{{ course.name }}"</strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>Esta acción es irreversible.</strong> Se eliminarán también:
+                    <ul class="mb-0 mt-2">
+                        <li>Todos los estudiantes inscritos</li>
+                        <li>Todos los profesores asignados</li>
+                        <li>El código de invitación</li>
+                        <li>Todos los horarios y tareas asociados</li>
+                    </ul>
+                </div>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Sí, eliminar
+                        </button>
+                        <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

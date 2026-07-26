@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Resultados: {{ quiz.title }} - StarStudy{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <h4 class="mb-4"><i class="bi bi-clipboard-check me-2"></i>Resultados: {{ quiz.title }}</h4>
+        {% with best=best_attempt %}
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body text-center">
+                <div class="display-4 {% if best.passed %}text-success{% else %}text-danger{% endif %}">{{ best.score }}%</div>
+                <p class="text-muted">{% if best.passed %}¡Aprobado!{% else %}No aprobado{% endif %} · {{ best.xp_earned }} XP ganados</p>
+            </div>
+        </div>
+        {% endwith %}
+        <h5>Historial de intentos</h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover">
+                <thead><tr><th>#</th><th>Nota</th><th>Estado</th><th>XP</th><th>Fecha</th></tr></thead>
+                <tbody>
+                {% for a in attempts %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><span class="badge {% if a.passed %}bg-success{% else %}bg-danger{% endif %}">{{ a.score }}%</span></td>
+                    <td>{% if a.passed %}Aprobado{% else %}Reprobado{% endif %}</td>
+                    <td>{{ a.xp_earned }}</td>
+                    <td>{{ a.submitted_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-4">
+            {% if quiz.max_attempts == 0 or attempts.count < quiz.max_attempts %}
+            <a href="{% url 'gamification:quiz_attempt' quiz.pk %}" class="btn btn-primary me-2"><i class="bi bi-arrow-repeat me-1"></i>Intentar de nuevo</a>
+            {% endif %}
+            <a href="{% url 'gamification:quiz_list' %}" class="btn btn-outline-secondary">Volver a quizzes</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

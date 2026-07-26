@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'apps.tasks',
     'apps.habits',
     'apps.schedule',
+    'apps.courses',
+    'apps.gamification',
 ]
 
 # Seguridad - Valores por defecto seguros para producción
@@ -83,6 +85,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.accounts.context_processors.user_courses',
+                'apps.accounts.context_processors.site_settings',
             ],
         },
     },

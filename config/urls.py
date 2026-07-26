@@ -14,4 +14,6 @@ urlpatterns = [
     path('tasks/', include('apps.tasks.urls')),
     path('habitos/', include('apps.habits.urls')),
     path('schedule/', include('apps.schedule.urls')),
+    path('cursos/', include('apps.courses.urls')),
+    path('gamificacion/', include('apps.gamification.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Rápido - StarStudy{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card bg-dark border-primary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quiz Rápido</h5>
+                    <a href="{% url 'gamification:quiz_list' %}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Volver
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Info del quiz -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label text-muted">Título del quiz *</label>
+                                <input type="text" name="title" class="form-control bg-dark text-white border-secondary"
+                                       placeholder="Ej: Quiz Rápido - Variables" required>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label text-muted">XP al aprobar</label>
+                                <input type="number" name="xp_reward" class="form-control bg-dark text-white border-secondary"
+                                       value="10" min="1">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label text-muted">Nota mínima (%)</label>
+                                <input type="number" name="passing_score" class="form-control bg-dark text-white border-secondary"
+                                       value="60" min="0" max="100">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted">Descripción (opcional)</label>
+                                <textarea name="description" class="form-control bg-dark text-white border-secondary"
+                                          rows="2" placeholder="Descripción breve del quiz..."></textarea>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label text-muted">Límite tiempo (min, 0=sin límite)</label>
+                                <input type="number" name="time_limit" class="form-control bg-dark text-white border-secondary"
+                                       value="0" min="0">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label text-muted">Máx. intentos</label>
+                                <input type="number" name="max_attempts" class="form-control bg-dark text-white border-secondary"
+                                       value="3" min="1">
+                            </div>
+                        </div>
+
+                        <!-- Preguntas -->
+                        <h6 class="text-white mb-3"><i class="bi bi-list-check me-2"></i>Preguntas</h6>
+                        <div id="questions-container">
+                            {% for i in "12345" %}
+                            <div class="card bg-dark border-secondary mb-3 question-card" id="question-{{ forloop.counter }}">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>Pregunta {{ forloop.counter }}</span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            onclick="document.getElementById('question-{{ forloop.counter }}').style.display='none'">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <textarea name="q{{ forloop.counter }}_text" class="form-control bg-dark text-white border-secondary"
+                                                  rows="2" placeholder="Escribe la pregunta..."></textarea>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6 col-md-3">
+                                            <select name="q{{ forloop.counter }}_type" class="form-select bg-dark text-white border-secondary">
+                                                <option value="SINGLE">Opción única</option>
+                                                <option value="MULTIPLE">Opción múltiple</option>
+                                                <option value="TF">Verdadero/Falso</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <input type="number" name="q{{ forloop.counter }}_points"
+                                                   class="form-control bg-dark text-white border-secondary"
+                                                   value="1" min="1" placeholder="Puntos">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <input type="text" name="q{{ forloop.counter }}_explanation"
+                                                   class="form-control bg-dark text-white border-secondary"
+                                                   placeholder="Explicación (opcional)">
+                                        </div>
+                                    </div>
+                                    <!-- Opciones -->
+                                    {% for j in "1234" %}
+                                    <div class="input-group mb-2">
+                                        <div class="input-group-text bg-dark border-secondary">
+                                            <input type="checkbox" name="q{{ forloop.parentloop.counter }}_c{{ forloop.counter }}_correct"
+                                                   class="form-check-input" title="Correcta">
+                                        </div>
+                                        <input type="text" name="q{{ forloop.parentloop.counter }}_c{{ forloop.counter }}_text"
+                                               class="form-control bg-dark text-white border-secondary"
+                                               placeholder="Opción {{ forloop.counter }}">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Asignar a cursos -->
+                        <h6 class="text-white mb-3 mt-4"><i class="bi bi-collection me-2"></i>Asignar a cursos</h6>
+                        <div class="row g-2">
+                            {% for course in my_courses %}
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="form-check card bg-dark border-secondary p-3">
+                                    <input class="form-check-input" type="checkbox" name="course_ids"
+                                           value="{{ course.pk }}" id="course-{{ course.pk }}">
+                                    <label class="form-check-label text-white" for="course-{{ course.pk }}">
+                                        {{ course.name }}
+                                        <br><small class="text-muted">{{ course.academic_year }} · {{ course.student_count }} estudiantes</small>
+                                    </label>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="alert alert-warning">No tienes cursos activos. Crea un curso primero.</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="border-secondary">
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-light" onclick="selectAllCourses()">
+                                <i class="bi bi-check-all me-1"></i>Seleccionar todos
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-lightning me-1"></i>Crear Quiz Rápido
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectAllCourses() {
+    document.querySelectorAll('input[name="course_ids"]').forEach(cb => cb.checked = true);
+}
+</script>
+{% endblock %}

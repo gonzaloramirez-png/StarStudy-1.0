@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Quiz - StarStudy{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-{% if action == 'Crear' %}plus-lg{% else %}pencil{% endif %} me-2"></i>{{ action }} Quiz</h2>
+    <a href="{% url 'gamification:quiz_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">Título <span class="text-danger">*</span></label>
+                        {{ form.title }}
+                        {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Descripción</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}</div>{% endif %}
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.course.id_for_label }}" class="form-label fw-bold">Curso <span class="text-danger">*</span></label>
+                            {{ form.course }}
+                            {% if form.course.errors %}<div class="text-danger small">{{ form.course.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.xp_reward.id_for_label }}" class="form-label">XP Recompensa</label>
+                            {{ form.xp_reward }}
+                            {% if form.xp_reward.errors %}<div class="text-danger small">{{ form.xp_reward.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.passing_score.id_for_label }}" class="form-label">Nota mínima (%)</label>
+                            {{ form.passing_score }}
+                            {% if form.passing_score.errors %}<div class="text-danger small">{{ form.passing_score.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.time_limit.id_for_label }}" class="form-label">Límite tiempo (min)</label>
+                            {{ form.time_limit }}
+                            {% if form.time_limit.errors %}<div class="text-danger small">{{ form.time_limit.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.max_attempts.id_for_label }}" class="form-label">Máx. intentos</label>
+                            {{ form.max_attempts }}
+                            {% if form.max_attempts.errors %}<div class="text-danger small">{{ form.max_attempts.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Quiz activo</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="save_quiz" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Guardar Quiz
+                        </button>
+                        <a href="{% url 'gamification:quiz_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if quiz %}
+        <!-- Sección de preguntas -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Preguntas</h5>
+            </div>
+            <div class="card-body">
+                {% if questions %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Pregunta</th>
+                                <th class="text-center" style="width: 120px;">Tipo</th>
+                                <th class="text-center" style="width: 80px;">Puntos</th>
+                                <th style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for q in questions %}
+                            <tr>
+                                <td>{{ q.order }}</td>
+                                <td>{{ q.text|truncatewords:15 }}</td>
+                                <td class="text-center"><span class="badge bg-secondary">{{ q.get_question_type_display }}</span></td>
+                                <td class="text-center">{{ q.points }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" disabled><i class="bi bi-pencil"></i></button>
+                                        <form method="POST" style="margin:0" onsubmit="return confirm('¿Eliminar esta pregunta?')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="delete_question" value="{{ q.pk }}">
+                                            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-question-circle" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No hay preguntas aún. Añade la primera abajo.</p>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <!-- Formulario añadir pregunta -->
+                <h6 class="mb-3">Añadir nueva pregunta</h6>
+                <form method="POST" class="row g-3">
+                    {% csrf_token %}
+                    <div class="col-md-8">{{ q_form.text }}</div>
+                    <div class="col-md-4">{{ q_form.question_type }}</div>
+                    <div class="col-md-2">{{ q_form.points }}</div>
+                    <div class="col-md-5">{{ q_form.correct_answer }}</div>
+                    <div class="col-md-5">{{ q_form.options }}</div>
+                    <div class="col-md-2">{{ q_form.order }}</div>
+                    <div class="col-12">
+                        {{ q_form.explanation }}
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" name="add_question" class="btn btn-success">
+                            <i class="bi bi-plus-lg me-1"></i>Añadir pregunta
+                        </button>
+                    </div>
+                    {% if q_form.non_field_errors %}
+                    <div class="col-12"><div class="alert alert-danger">{{ q_form.non_field_errors }}</div></div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
