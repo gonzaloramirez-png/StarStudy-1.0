@@ -21,6 +21,7 @@ class ScheduleEntry(models.Model):
         WEDNESDAY = 'WED', 'Miércoles'
         THURSDAY = 'THU', 'Jueves'
         FRIDAY = 'FRI', 'Viernes'
+        SATURDAY = 'SAT', 'Sábado'
 
     class EntryType(models.TextChoices):
         SUBJECT = 'SUBJECT', 'Materia'
