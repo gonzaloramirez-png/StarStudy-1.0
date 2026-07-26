@@ -28,47 +28,6 @@
             </button>
             {% endif %}
 
-            <div class="dropdown me-2">
-                <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-label="Menú de navegación">
-                    <i class="bi bi-list"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="{% url 'home' %}"><i class="bi bi-house-door me-2"></i>Inicio</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    {% if user.role == 'TEACHER' %}
-                    <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
-                    <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
-                    <li><a class="dropdown-item" href="{% url 'gamification:courses_ranking' %}"><i class="bi bi-trophy me-2"></i>Rankings</a></li>
-                    {% elif user.role == 'STAFF' %}
-                    <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
-                    <li><a class="dropdown-item" href="{% url 'task_personal' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
-                    <li><a class="dropdown-item" href="{% url 'habito_list' %}"><i class="bi bi-star me-2"></i>Hábitos</a></li>
-                    {% elif user.role == 'PROGRAMMER' %}
-                    <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
-                    <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
-                    <li><a class="dropdown-item" href="{% url 'dev:dashboard' %}"><i class="bi bi-terminal me-2"></i>DEV</a></li>
-                    {% else %}
-                    <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
-                    <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
-                    <li><a class="dropdown-item" href="{% url 'pomodoro' %}"><i class="bi bi-clock-history me-2"></i>Pomodoro</a></li>
-                    {% if selected_course %}
-                    <li><a class="dropdown-item" href="{% url 'gamification:course_ranking' selected_course.pk %}"><i class="bi bi-trophy me-2"></i>Ranking</a></li>
-                    {% endif %}
-                    {% if user.linked_to %}
-                    <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-people me-2"></i>Clase</a></li>
-                    {% endif %}
-                    {% endif %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Perfil</a></li>
-                    <li>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-
             <div class="navbar-actions">
                 <a href="{% url 'notification_list' %}" class="btn btn-outline-light btn-sm position-relative" aria-label="Notificaciones">
                     <i class="bi bi-bell"></i>
@@ -78,6 +37,47 @@
                     </span>
                     {% endif %}
                 </a>
+
+                <div class="dropdown ms-1">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-label="Menú de navegación">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'home' %}"><i class="bi bi-house-door me-2"></i>Inicio</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% if user.role == 'TEACHER' %}
+                        <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
+                        <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'gamification:courses_ranking' %}"><i class="bi bi-trophy me-2"></i>Rankings</a></li>
+                        {% elif user.role == 'STAFF' %}
+                        <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
+                        <li><a class="dropdown-item" href="{% url 'task_personal' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'habito_list' %}"><i class="bi bi-star me-2"></i>Hábitos</a></li>
+                        {% elif user.role == 'PROGRAMMER' %}
+                        <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
+                        <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'dev:dashboard' %}"><i class="bi bi-terminal me-2"></i>DEV</a></li>
+                        {% else %}
+                        <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
+                        <li><a class="dropdown-item" href="{% url 'pomodoro' %}"><i class="bi bi-clock-history me-2"></i>Pomodoro</a></li>
+                        {% if selected_course %}
+                        <li><a class="dropdown-item" href="{% url 'gamification:course_ranking' selected_course.pk %}"><i class="bi bi-trophy me-2"></i>Ranking</a></li>
+                        {% endif %}
+                        {% if user.linked_to %}
+                        <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-people me-2"></i>Clase</a></li>
+                        {% endif %}
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
             {% endif %}
         </div>
