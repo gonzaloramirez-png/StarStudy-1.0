@@ -13,6 +13,7 @@ Para producción:
 """
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 import os
 
 load_dotenv()
@@ -98,14 +99,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {}
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': DATABASE_URL.split('/')[-1],
-        'USER': DATABASE_URL.split('//')[1].split(':')[0],
-        'PASSWORD': DATABASE_URL.split(':')[2].split('@')[0],
-        'HOST': DATABASE_URL.split('@')[1].split(':')[0],
-        'PORT': DATABASE_URL.split(':')[3].split('/')[0] if ':' in DATABASE_URL.split('@')[1] else '5432',
-    }
+    DATABASES['default'] = dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
 else:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
