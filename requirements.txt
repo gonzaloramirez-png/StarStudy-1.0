@@ -4,3 +4,4 @@ apscheduler==3.11.3
 cryptography
 reportlab
 gunicorn
+psycopg2-binary
