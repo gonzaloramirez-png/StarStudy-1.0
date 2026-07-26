@@ -92,6 +92,7 @@ def home(request):
         'personal_count': stats['personal'],
         'user_courses': user_courses,
         'selected_course': selected_course,
+        'now': now,
     }
 
     return render(request, 'home.html', context)

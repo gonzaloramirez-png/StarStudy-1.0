@@ -37,6 +37,4 @@ urlpatterns = [
     # Asignación masiva
     path('<int:pk>/asignar-masivo/', bulk_task_assign, name='bulk_task_assign'),
 
-    # Course switcher (HTMX)
-    path('switch/', views.course_switch, name='course_switch'),
 ]

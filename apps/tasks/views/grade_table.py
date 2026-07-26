@@ -86,6 +86,10 @@ def grade_table(request, course_pk):
         avg_score=Avg('score'),
     )
 
+    from django.utils import timezone
+    now = timezone.now()
+    urgent_date = now + timezone.timedelta(days=3)
+
     context = {
         'course': course,
         'tasks': tasks,
@@ -96,6 +100,8 @@ def grade_table(request, course_pk):
         'status_choices': Task.Status.choices,
         'student_filter': student_filter,
         'task_filter': task_filter,
+        'now': now,
+        'urgent_date': urgent_date,
     }
     return render(request, 'tasks/grade_table.html', context)
 

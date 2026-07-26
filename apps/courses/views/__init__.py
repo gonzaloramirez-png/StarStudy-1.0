@@ -94,7 +94,7 @@ def course_create(request):
             # Generar código de invitación
             CourseCode.objects.create(course=course)
             messages.success(request, f'Curso "{course.name}" creado con código de invitación.')
-            return redirect('course_detail', pk=course.pk)
+            return redirect('courses:course_detail', pk=course.pk)
 
     context = {'academic_year': str(timezone.now().year)}
     return render(request, 'courses/course_form.html', context)
@@ -111,7 +111,7 @@ def course_detail(request, pk):
 
     if not (is_teacher or is_student or request.user.role == User.Role.PROGRAMMER):
         messages.error(request, 'No tienes acceso a este curso.')
-        return redirect('course_list')
+        return redirect('courses:course_list')
 
     # Obtener código de invitación
     invite_code = None
@@ -149,7 +149,7 @@ def course_edit(request, pk):
 
     if not assignment and request.user.role != User.Role.PROGRAMMER:
         messages.error(request, 'Solo el profesor titular puede editar el curso.')
-        return redirect('course_detail', pk=pk)
+        return redirect('courses:course_detail', pk=pk)
 
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -164,7 +164,7 @@ def course_edit(request, pk):
             course.academic_year = academic_year
             course.save(update_fields=['name', 'description', 'academic_year', 'updated_at'])
             messages.success(request, 'Curso actualizado.')
-            return redirect('course_detail', pk=pk)
+            return redirect('courses:course_detail', pk=pk)
 
     context = {'course': course}
     return render(request, 'courses/course_form.html', context)
@@ -202,13 +202,13 @@ def course_delete(request, pk):
 
     if not assignment and request.user.role != User.Role.PROGRAMMER:
         messages.error(request, 'Sin permisos.')
-        return redirect('course_list')
+        return redirect('courses:course_list')
 
     if request.method == 'POST':
         name = course.name
         course.delete()
         messages.success(request, f'Curso "{name}" eliminado.')
-        return redirect('course_list')
+        return redirect('courses:course_list')
 
     return render(request, 'courses/course_confirm_delete.html', {'course': course})
 

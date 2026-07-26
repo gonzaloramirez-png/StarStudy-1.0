@@ -15,7 +15,7 @@
                     <div class="col">
                         <a href="{% url 'courses:course_detail' course.pk %}?course={{ course.pk }}" 
                            class="course-card text-decoration-none {% if selected_course and selected_course.pk == course.pk %}active{% endif %}"
-                           hx-get="{% url 'course_switch' course.pk %}"
+                           hx-get="{% url 'courses:course_switch' course.pk %}"
                            hx-target="body"
                            hx-push-url="true">
                             <div class="card h-100 bg-secondary-subtle border-{% if course.status == 'ACTIVE' %}success{% else %}warning text-dark{% endif %} 

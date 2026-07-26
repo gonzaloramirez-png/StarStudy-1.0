@@ -20,7 +20,7 @@ def course_clone(request, pk):
     if request.user.role in (User.Role.TEACHER, User.Role.STAFF):
         if not original.teacher_assignments.filter(teacher=request.user).exists():
             messages.error(request, 'No tienes acceso a este curso')
-            return redirect('course_list')
+            return redirect('courses:course_list')
 
     if request.method == 'POST':
         new_name = request.POST.get('name', f'{original.name} (Copia)')
@@ -45,7 +45,7 @@ def course_clone(request, pk):
         )
 
         messages.success(request, f'Curso "{new_course.name}" creado como copia de "{original.name}"')
-        return redirect('course_detail', pk=new_course.pk)
+        return redirect('courses:course_detail', pk=new_course.pk)
 
     context = {
         'original': original,
@@ -73,11 +73,11 @@ def bulk_task_assign(request, pk):
 
     if not title or not deadline:
         messages.error(request, 'Título y fecha límite son obligatorios')
-        return redirect('course_detail', pk=pk)
+        return redirect('courses:course_detail', pk=pk)
 
     if not student_ids:
         messages.warning(request, 'Selecciona al menos un estudiante')
-        return redirect('course_detail', pk=pk)
+        return redirect('courses:course_detail', pk=pk)
 
     enrolled_students = StudentCourse.objects.filter(
         course=course,
@@ -99,4 +99,4 @@ def bulk_task_assign(request, pk):
         created_count += 1
 
     messages.success(request, f'Tarea "{title}" asignada a {created_count} estudiantes')
-    return redirect('course_detail', pk=pk)
+    return redirect('courses:course_detail', pk=pk)
