@@ -56,11 +56,13 @@
                         {% elif user.role == 'PROGRAMMER' %}
                         <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
                         <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'habito_list' %}"><i class="bi bi-star me-2"></i>Hábitos</a></li>
                         <li><a class="dropdown-item" href="{% url 'dev:dashboard' %}"><i class="bi bi-terminal me-2"></i>DEV</a></li>
                         <li><a class="dropdown-item" href="{% url 'dev:dev_ranking' %}"><i class="bi bi-trophy me-2"></i>Ranking DEV</a></li>
                         {% else %}
                         <li><a class="dropdown-item" href="{% url 'task_list' %}"><i class="bi bi-list-task me-2"></i>Tareas</a></li>
                         <li><a class="dropdown-item" href="{% url 'schedule_personal' %}"><i class="bi bi-calendar-week me-2"></i>Horario</a></li>
+                        <li><a class="dropdown-item" href="{% url 'habito_list' %}"><i class="bi bi-star me-2"></i>Hábitos</a></li>
                         <li><a class="dropdown-item" href="{% url 'pomodoro' %}"><i class="bi bi-clock-history me-2"></i>Pomodoro</a></li>
                         {% if selected_course %}
                         <li><a class="dropdown-item" href="{% url 'gamification:course_ranking' selected_course.pk %}"><i class="bi bi-trophy me-2"></i>Ranking</a></li>

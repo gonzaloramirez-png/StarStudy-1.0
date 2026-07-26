@@ -14,7 +14,7 @@ from apps.habits.services import toggle_habit, create_habit, delete_habit
 from apps.accounts.decorators import role_required
 
 
-@role_required('STAFF')
+@role_required('STAFF', 'PROGRAMMER', 'STUDENT')
 def habito_list(request):
     today = timezone.localdate()
     habits = request.user.habits.all().annotate(
@@ -29,7 +29,7 @@ def habito_list(request):
     return render(request, 'habits/habito_list.html', {'habits': habits})
 
 
-@role_required('STAFF')
+@role_required('STAFF', 'PROGRAMMER', 'STUDENT')
 def habito_toggle(request, pk):
     if request.method != 'POST':
         return redirect('habito_list')
@@ -45,7 +45,7 @@ def habito_toggle(request, pk):
     return redirect('habito_list')
 
 
-@role_required('STAFF')
+@role_required('STAFF', 'PROGRAMMER', 'STUDENT')
 def habito_create(request):
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
@@ -60,7 +60,7 @@ def habito_create(request):
     return render(request, 'habits/habito_form.html')
 
 
-@role_required('STAFF')
+@role_required('STAFF', 'PROGRAMMER', 'STUDENT')
 def habito_delete(request, pk):
     if request.method != 'POST':
         return redirect('habito_list')
