@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.schedule',
     'apps.courses',
     'apps.gamification',
+    'apps.dev',
 ]
 
 # Seguridad - Valores por defecto seguros para producción

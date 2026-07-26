@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Salud del Servidor - DEV{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-heart-pulse me-2"></i>Salud del Servidor</h4>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i>Refrescar</button>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 text-center" style="background: {% if health.status == 'HEALTHY' %}rgba(102,187,106,0.1){% elif health.status == 'DEGRADED' %}rgba(255,167,38,0.1){% else %}rgba(239,83,80,0.1){% endif %};">
+            <div class="card-body">
+                <div style="font-size: 2rem; color: {% if health.status == 'HEALTHY' %}var(--color-success){% elif health.status == 'DEGRADED' %}var(--color-warning){% else %}var(--color-danger){% endif %};">
+                    {% if health.status == 'HEALTHY' %}✓{% elif health.status == 'DEGRADED' %}⚠{% else %}✗{% endif %}
+                </div>
+                <strong>{{ health.status }}</strong>
+                <small class="text-muted d-block">Estado General</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 text-center" style="background: rgba(255,255,255,0.03);">
+            <div class="card-body">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-info);">{{ health.cpu_percent|default:0 }}%</div>
+                <small class="text-muted">CPU</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 text-center" style="background: rgba(255,255,255,0.03);">
+            <div class="card-body">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-info);">{{ health.memory_used_mb|default:0 }}MB</div>
+                <small class="text-muted">Memoria</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 text-center" style="background: rgba(255,255,255,0.03);">
+            <div class="card-body">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-info);">{{ health.db_response_ms|default:0 }}ms</div>
+                <small class="text-muted">DB Response</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header"><i class="bi bi-journal-text me-2"></i>Logs de Salud</div>
+            <div class="card-body" style="max-height: 400px; overflow: auto;">
+                {% for log in recent_logs %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                    <div>
+                        <span class="badge {% if log.status == 'HEALTHY' %}bg-success{% elif log.status == 'DEGRADED' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ log.status }}</span>
+                        <small class="text-muted ms-2">{{ log.service_name }}</small>
+                    </div>
+                    <small class="text-muted">{{ log.response_time_ms }}ms · {{ log.created_at|date:"d/m H:i" }}</small>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No hay logs aún</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header"><i class="bi bi-lightning me-2"></i>Pings Recientes</div>
+            <div class="card-body" style="max-height: 400px; overflow: auto;">
+                {% for ping in recent_pings %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                    <div>
+                        <span class="badge {% if ping.status_code == 200 %}bg-success{% else %}bg-danger{% endif %}">{{ ping.status_code }}</span>
+                        <small class="text-muted ms-2">{{ ping.endpoint }}</small>
+                    </div>
+                    <small class="text-muted">{{ ping.response_time_ms }}ms · {{ ping.created_at|date:"d/m H:i" }}</small>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No hay pings aún</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

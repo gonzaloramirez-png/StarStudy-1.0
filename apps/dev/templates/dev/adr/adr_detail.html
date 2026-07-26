@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}{{ adr.title }} - ADR{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dev:adr_list' %}" class="text-decoration-none">ADRs</a></li>
+        <li class="breadcrumb-item active">{{ adr.title }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-git me-2"></i>{{ adr.title }}</span>
+                <span class="badge {% if adr.status == 'ACCEPTED' %}bg-success{% elif adr.status == 'PROPOSED' %}bg-info{% else %}bg-secondary{% endif %}">{{ adr.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Contexto</h6>
+                    <p>{{ adr.context }}</p>
+                </div>
+                <div class="mb-3">
+                    <h6>Decisión</h6>
+                    <p>{{ adr.decision }}</p>
+                </div>
+                <div class="mb-3">
+                    <h6>Consecuencias</h6>
+                    <p>{{ adr.consequences }}</p>
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>por {{ adr.author.get_full_name|default:adr.author.email }}</span>
+                    <span>{{ adr.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% if adr.author == request.user %}
+                <a href="{% url 'dev:adr_edit' adr.pk %}" class="btn btn-outline-primary btn-sm mt-3">Editar</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

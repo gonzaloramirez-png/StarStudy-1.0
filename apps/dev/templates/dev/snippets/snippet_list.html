@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Snippets - DEV{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-code-slash me-2"></i>Snippets</h4>
+    <a href="{% url 'dev:snippet_create' %}" class="btn btn-primary btn-sm">+ Nuevo Snippet</a>
+</div>
+
+{% if all_tags %}
+<div class="mb-3">
+    <a href="{% url 'dev:snippet_list' %}" class="btn btn-sm {% if not current_tag %}btn-primary{% else %}btn-outline-light{% endif %}">Todos</a>
+    {% for tag in all_tags %}
+    <a href="?tag={{ tag }}" class="btn btn-sm {% if current_tag == tag %}btn-info{% else %}btn-outline-light{% endif %}">{{ tag }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="row g-3">
+    {% for s in snippets %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 h-100" style="background: rgba(255,255,255,0.03);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <h6 class="mb-0">{{ s.title }}</h6>
+                    <small class="text-muted">{{ s.language }}</small>
+                </div>
+                <pre class="p-2 rounded mb-2" style="background: rgba(0,0,0,0.3); color: var(--accent-light); font-size: 0.8rem; max-height: 120px; overflow: auto;"><code>{{ s.code|truncatechars:200 }}</code></pre>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        {% for tag in s.tags %}<span class="badge bg-secondary me-1">{{ tag }}</span>{% endfor %}
+                    </div>
+                    <div>
+                        <a href="{% url 'dev:snippet_edit' s.pk %}" class="btn btn-sm btn-outline-light"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{% url 'dev:snippet_delete' s.pk %}" class="d-inline" onsubmit="return confirm('¿Eliminar snippet?')">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-code-slash" style="font-size: 3rem; color: var(--color-text-muted);"></i>
+        <p class="text-muted mt-3">No hay snippets. ¡Creá el primero!</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

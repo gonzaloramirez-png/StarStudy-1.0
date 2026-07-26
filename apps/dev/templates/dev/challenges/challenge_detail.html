@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ challenge.title }} - DEV{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dev:challenge_list' %}" class="text-decoration-none">Desafíos</a></li>
+        <li class="breadcrumb-item active">{{ challenge.title }}</li>
+    </ol>
+</nav>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-controller me-2"></i>{{ challenge.title }}</span>
+                <span class="badge {% if challenge.difficulty == 'EASY' %}bg-success{% elif challenge.difficulty == 'MEDIUM' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ challenge.get_difficulty_display }}</span>
+            </div>
+            <div class="card-body">
+                <p>{{ challenge.description }}</p>
+                <p class="text-muted small">Categoría: {{ challenge.get_category_display }} · XP: +{{ challenge.xp_reward }}</p>
+
+                {% if challenge.initial_code %}
+                <h6>Código inicial:</h6>
+                <pre class="p-3 rounded" style="background: rgba(0,0,0,0.3); color: var(--accent-light); overflow-x: auto;"><code>{{ challenge.initial_code }}</code></pre>
+                {% endif %}
+
+                {% if existing_submission %}
+                <div class="alert {% if existing_submission.status == 'PASSED' %}alert-success{% else %}alert-warning{% endif %}">
+                    <strong>Estado:</strong> {{ existing_submission.get_status_display }} · +{{ existing_submission.xp_earned }} XP
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header"><i class="bi bi-code-slash me-2"></i>Tu solución</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.submitted_code }}
+                    {% if form.submitted_code.errors %}
+                    <div class="text-danger small mt-1">{{ form.submitted_code.errors }}</div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary mt-3 w-100">
+                        <i class="bi bi-send me-1"></i>Enviar solución
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

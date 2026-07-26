@@ -63,6 +63,9 @@
                     <a class="nav-link {% if 'task' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'task_list' %}">
                         <i class="bi bi-list-task me-1"></i>Tareas
                     </a>
+                    <a class="nav-link {% if request.resolver_match.app_name == 'dev' %}active{% endif %}" href="{% url 'dev:dashboard' %}">
+                        <i class="bi bi-terminal me-1"></i>DEV
+                    </a>
                 {% else %}
                     <a class="nav-link {% if request.resolver_match.url_name == 'task_list' %}active{% endif %}" href="{% url 'task_list' %}">
                         <i class="bi bi-list-task me-1"></i>Tareas

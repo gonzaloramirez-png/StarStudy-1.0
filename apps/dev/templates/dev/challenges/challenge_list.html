@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Desafíos DEV - StarStudy{% endblock %}
+{% block content %}
+<h4><i class="bi bi-controller me-2"></i>Desafíos de Código</h4>
+
+<div class="row g-2 mb-3">
+    <div class="col-auto">
+        <a href="?difficulty=" class="btn btn-sm {% if not current_difficulty %}btn-primary{% else %}btn-outline-light{% endif %}">Todos</a>
+    </div>
+    {% for val, label in difficulty_choices %}
+    <div class="col-auto">
+        <a href="?difficulty={{ val }}{% if current_category %}&category={{ current_category }}{% endif %}" class="btn btn-sm {% if current_difficulty == val %}btn-primary{% else %}btn-outline-light{% endif %}">{{ label }}</a>
+    </div>
+    {% endfor %}
+    <div class="col-auto ms-auto">
+        {% for val, label in category_choices %}
+        <a href="?category={{ val }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}" class="btn btn-sm {% if current_category == val %}btn-info{% else %}btn-outline-light{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for c in challenges %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 h-100" style="background: rgba(255,255,255,0.03);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge {% if c.difficulty == 'EASY' %}bg-success{% elif c.difficulty == 'MEDIUM' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ c.get_difficulty_display }}</span>
+                    <small class="text-muted">{{ c.get_category_display }}</small>
+                </div>
+                <h6>{{ c.title }}</h6>
+                <p class="text-muted small mb-2">{{ c.description|truncatewords:20 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">+{{ c.xp_reward }} XP</span>
+                    {% if c.id in submitted_ids %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Resuelto</span>
+                    {% else %}
+                    <a href="{% url 'dev:challenge_detail' c.pk %}" class="btn btn-sm btn-outline-primary">Resolver</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-controller" style="font-size: 3rem; color: var(--color-text-muted);"></i>
+        <p class="text-muted mt-3">No hay desafíos disponibles</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

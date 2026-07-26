@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Ranking DEV - StarStudy{% endblock %}
+{% block content %}
+<h4><i class="bi bi-trophy me-2"></i>Ranking Técnico DEV</h4>
+
+<div class="card border-0 mb-3" style="background: rgba(255,213,79,0.05);">
+    <div class="card-body text-center py-3">
+        <small class="text-muted">Tu posición</small>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent);">#{{ my_position }}</div>
+        <small class="text-muted">{{ current_profile.total_dev_xp }} DevXP · Nv. {{ current_profile.current_dev_level }}</small>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+        <thead>
+            <tr>
+                <th style="width: 60px;">#</th>
+                <th>Desarrollador</th>
+                <th>DevXP</th>
+                <th>Nivel</th>
+                <th>Desafíos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in profiles %}
+            <tr {% if p.id == current_profile.id %}style="background: rgba(255,213,79,0.08);"{% endif %}>
+                <td>
+                    {% if forloop.counter == 1 %}<span style="color: gold;">🥇</span>
+                    {% elif forloop.counter == 2 %}<span style="color: silver;">🥈</span>
+                    {% elif forloop.counter == 3 %}<span style="color: #cd7f32;">🥉</span>
+                    {% else %}{{ forloop.counter }}{% endif %}
+                </td>
+                <td>{{ p.user.get_full_name|default:p.user.email }}</td>
+                <td><strong style="color: var(--accent);">{{ p.total_dev_xp }}</strong></td>
+                <td>Nv. {{ p.current_dev_level }}</td>
+                <td>{{ p.submissions.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

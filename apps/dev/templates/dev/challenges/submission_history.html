@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Envíos - DEV{% endblock %}
+{% block content %}
+<h4><i class="bi bi-clock-history me-2"></i>Historial de Envíos</h4>
+
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Desafío</th>
+                <th>Estado</th>
+                <th>XP</th>
+                <th>Tiempo</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in submissions %}
+            <tr>
+                <td>
+                    <a href="{% url 'dev:challenge_detail' s.challenge.pk %}" class="text-decoration-none">{{ s.challenge.title }}</a>
+                    <br><small class="text-muted">{{ s.challenge.get_difficulty_display }} · {{ s.challenge.get_category_display }}</small>
+                </td>
+                <td>
+                    <span class="badge {% if s.status == 'PASSED' %}bg-success{% elif s.status == 'FAILED' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                        {{ s.get_status_display }}
+                    </span>
+                </td>
+                <td>+{{ s.xp_earned }}</td>
+                <td>{{ s.execution_time_ms|default:"-" }}ms</td>
+                <td><small>{{ s.created_at|date:"d/m H:i" }}</small></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-4 text-muted">No hay envíos aún</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

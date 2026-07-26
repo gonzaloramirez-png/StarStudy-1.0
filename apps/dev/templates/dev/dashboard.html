@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}DEV Workspace - StarStudy{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0"><i class="bi bi-terminal me-2"></i>DEV Workspace</h4>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-warning" id="focusToggle" onclick="toggleFocus()">
+                    <i class="bi bi-moon-stars me-1"></i>
+                    <span id="focusLabel">{% if profile.focus_mode_active %}Salir de Enfoque{% else %}Modo Enfoque{% endif %}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0" style="background: rgba(255,213,79,0.08);">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent);">Nv. {{ profile.current_dev_level }}</div>
+                <div class="text-muted mb-2">Dev Level</div>
+                <div class="progress" style="height: 8px; background: rgba(255,255,255,0.1);">
+                    <div class="progress-bar" style="width: {{ profile.xp_progress }}%; background: var(--accent);"></div>
+                </div>
+                <small class="text-muted mt-1 d-block">{{ profile.total_dev_xp }} DevXP</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0" style="background: rgba(102,187,106,0.08);">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--color-success);">
+                    {% if health.status == 'HEALTHY' %}✓{% elif health.status == 'DEGRADED' %}⚠{% else %}✗{% endif %}
+                </div>
+                <div class="text-muted">Servidor: {{ health.status }}</div>
+                <small class="text-muted">CPU: {{ health.cpu_percent|default:0 }}% · RAM: {{ health.memory_used_mb|default:0 }}MB</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0" style="background: rgba(66,165,245,0.08);">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--color-info);">{{ profile.submissions.count|default:0 }}</div>
+                <div class="text-muted">Desafíos Resueltos</div>
+                <small class="text-muted">{{ profile.snippets.count|default:0 }} snippets guardados</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-controller me-2"></i>Desafíos Activos</span>
+                <a href="{% url 'dev:challenge_list' %}" class="btn btn-sm btn-outline-light">Ver todos</a>
+            </div>
+            <div class="card-body">
+                {% for c in active_challenges %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                    <div>
+                        <span class="badge me-2 {% if c.difficulty == 'EASY' %}bg-success{% elif c.difficulty == 'MEDIUM' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ c.get_difficulty_display }}</span>
+                        <span class="text-muted me-2">{{ c.get_category_display }}</span>
+                        <a href="{% url 'dev:challenge_detail' c.pk %}" class="text-decoration-none">{{ c.title }}</a>
+                    </div>
+                    <span class="text-muted small">+{{ c.xp_reward }} XP</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No hay desafíos activos</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-code-slash me-2"></i>Snippets</span>
+                <a href="{% url 'dev:snippet_list' %}" class="btn btn-sm btn-outline-light">Ver todos</a>
+            </div>
+            <div class="card-body">
+                {% for s in recent_snippets %}
+                <div class="mb-2 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-decoration-none">{{ s.title }}</span>
+                        <small class="text-muted">{{ s.language }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No hay snippets</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card border-0" style="background: rgba(255,255,255,0.03);">
+            <div class="card-header"><i class="bi bi-git me-2"></i>Architecture Decision Records</div>
+            <div class="card-body">
+                <div class="row">
+                    {% for adr in recent_adrs %}
+                    <div class="col-md-4">
+                        <div class="p-2 rounded mb-2" style="background: rgba(255,255,255,0.03);">
+                            <span class="badge me-1 {% if adr.status == 'ACCEPTED' %}bg-success{% elif adr.status == 'PROPOSED' %}bg-info{% else %}bg-secondary{% endif %}">{{ adr.get_status_display }}</span>
+                            <a href="{% url 'dev:adr_detail' adr.pk %}" class="text-decoration-none">{{ adr.title }}</a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3">No hay ADRs</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFocus() {
+    fetch('{% url "dev:api_profile" %}', {headers: {'Authorization': 'Token {{ profile.api_token }}'}})
+    .then(r => r.json())
+    .then(data => {
+        fetch(window.location.href, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'}, body: JSON.stringify({action: 'toggle_focus'})})
+        .then(() => location.reload());
+    });
+}
+</script>
+{% endblock %}

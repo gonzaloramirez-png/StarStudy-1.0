@@ -6,4 +6,5 @@ cryptography
 reportlab
 gunicorn
 psycopg2-binary
+psutil
 whitenoise
