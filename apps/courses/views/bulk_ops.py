@@ -34,7 +34,6 @@ def course_clone(request, pk):
         )
 
         if not clone_tasks:
-            from apps.tasks.models import Task
             Task.objects.filter(course=new_course).delete()
 
         # Asignar al creador como titular

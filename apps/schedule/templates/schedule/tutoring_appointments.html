@@ -17,7 +17,7 @@
                 <p class="text-muted small">{{ slot.location|default:"Online" }}</p>
                 <p class="small">Cupos: {{ slot.appointments.count }}/{{ slot.max_students }}</p>
                 {% if is_student %}
-                <form method="post" action="{% url 'schedule:tutoring_appointment_book' slot.pk %}">
+                <form method="post" action="{% url 'tutoring_appointment_book' slot.pk %}">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-calendar-plus me-1"></i>Reservar</button>
                 </form>
@@ -43,10 +43,10 @@
             <td><span class="badge {% if apt.status == 'CONFIRMED' %}bg-success{% elif apt.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ apt.get_status_display }}</span></td>
             <td>
                 {% if apt.status == 'CONFIRMED' and is_teacher %}
-                <form method="post" action="{% url 'schedule:tutoring_appointment_confirm' apt.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success"><i class="bi bi-check"></i></button></form>
+                <form method="post" action="{% url 'tutoring_appointment_confirm' apt.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success"><i class="bi bi-check"></i></button></form>
                 {% endif %}
                 {% if apt.status != 'CANCELLED' %}
-                <form method="post" action="{% url 'schedule:tutoring_appointment_cancel_student' apt.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+                <form method="post" action="{% url 'tutoring_appointment_cancel_student' apt.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
                 {% endif %}
             </td>
         </tr>

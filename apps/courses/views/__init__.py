@@ -535,7 +535,7 @@ def course_switch(request, pk):
         return JsonResponse({'success': False, 'error': 'Sin acceso a este curso'}, status=403)
 
     request.session['selected_course'] = pk
-    return JsonResponse({'success': True, 'redirect': reverse('course_detail', args=[pk])})
+    return JsonResponse({'success': True, 'redirect': reverse('courses:course_detail', args=[pk])})
 
 
 @login_required

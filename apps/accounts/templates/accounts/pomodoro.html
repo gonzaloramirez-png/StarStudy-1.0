@@ -239,7 +239,7 @@ function showXpReward(xp) {
 }
 
 function savePomodoroSession(xp) {
-    fetch('/pomodoro/save/', {
+    fetch('{% url "pomodoro_save" %}', {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,

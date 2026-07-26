@@ -80,7 +80,7 @@
                             <td>{{ assignment.assigned_by.get_full_name|default:assignment.assigned_by.email }}</td>
                             <td>
                                 {% if assignment.role != 'TITULAR' %}
-                                <form method="post" action="{% url 'courses:teacher_remove' assignment.course.pk %}" class="d-inline">
+                                <form method="post" action="{% url 'courses:teacher_remove' assignment.pk %}" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="teacher_pk" value="{{ assignment.teacher.pk }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Remover">

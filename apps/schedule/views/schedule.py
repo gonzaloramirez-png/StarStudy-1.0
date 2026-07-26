@@ -105,7 +105,7 @@ def risk_traffic_light(request, course_pk):
     # Verificar que es profesor del curso
     if not TeacherCourse.objects.filter(course=course, teacher=request.user).exists():
         messages.error(request, 'No tienes acceso a este curso.')
-        return redirect('course_list')
+        return redirect('courses:course_list')
 
     # Obtener o crear semáforos para todos los estudiantes activos
     students = StudentCourse.objects.filter(
@@ -248,7 +248,7 @@ def tutoring_slots(request, course_pk):
 
     if not TeacherCourse.objects.filter(course=course, teacher=request.user).exists():
         messages.error(request, 'No tienes acceso a este curso.')
-        return redirect('course_list')
+        return redirect('courses:course_list')
 
     slots = TutoringSlot.objects.filter(course=course, teacher=request.user).order_by('day', 'start_time')
 

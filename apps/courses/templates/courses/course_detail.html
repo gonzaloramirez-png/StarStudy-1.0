@@ -552,7 +552,7 @@ function removeStudent(enrollmentId) {
 }
 
 function updateTeacherRole(tcId, newRole) {
-    fetch(`{% url 'courses:teacher_role_update' 0 %}`.replace('0', tcId), {
+    fetch(`{% url 'courses:teacher_change_role' 0 %}`.replace('0', tcId), {
         method: 'POST',
         headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })

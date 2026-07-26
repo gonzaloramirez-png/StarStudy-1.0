@@ -52,16 +52,16 @@ class RegisterForm(UserCreationForm):
 
     def _generate_unique_username(self, base: str, role: str) -> str:
         """Genera username único de forma atómica dentro de transacción."""
+        from django.db import OperationalError
         username = f"{base}_{role.lower()}"
         counter = 1
         while True:
             try:
                 with transaction.atomic():
-                    User.objects.select_for_update(nowait=True).filter(username=username).exists()
-            except User.DoesNotExist:
+                    if not User.objects.select_for_update(nowait=True).filter(username=username).exists():
+                        return username
+            except OperationalError:
                 pass
-            if not User.objects.filter(username=username).exists():
-                return username
             username = f"{base}_{role.lower()}_{counter}"
             counter += 1
 

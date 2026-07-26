@@ -390,14 +390,14 @@ def badge_award(request, pk):
 
 # === MODO CLASE / PRESENTACIÓN ===
 
-from django.db.models import Sum
-from apps.tasks.models import Task
-from apps.gamification.models import Ranking
-
 
 @login_required
 def presentation_mode(request, course_pk):
     """Modo presentación fullscreen para proyectar en clase."""
+    from django.db.models import Sum
+    from apps.tasks.models import Task
+    from apps.gamification.models import Ranking
+
     course = get_object_or_404(Course, pk=course_pk)
 
     is_teacher = TeacherCourse.objects.filter(
