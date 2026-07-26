@@ -70,6 +70,9 @@
                     <a class="nav-link {% if 'schedule' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'schedule_personal' %}">
                         <i class="bi bi-calendar-week me-1"></i>Horario
                     </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'pomodoro' %}active{% endif %}" href="{% url 'pomodoro' %}">
+                        <i class="bi bi-clock-history me-1"></i>Pomodoro
+                    </a>
                     {% if selected_course %}
                     <a class="nav-link {% if request.resolver_match.url_name == 'course_ranking' %}active{% endif %}" href="{% url 'gamification:course_ranking' selected_course.pk %}">
                         <i class="bi bi-trophy me-1"></i>Ranking

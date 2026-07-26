@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block title %}Pomodoro - StarStudy{% endblock %}
+{% block content %}
+<style>
+.pomodoro-container {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.pomodoro-timer {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 2rem 0;
+}
+.pomodoro-timer::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 213, 79, 0.3);
+}
+.pomodoro-timer.active {
+    border: 4px solid var(--accent);
+    box-shadow: 0 0 40px rgba(255, 213, 79, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+.pomodoro-timer.break-mode {
+    border: 4px solid #4fc3f7;
+    box-shadow: 0 0 40px rgba(79, 195, 247, 0.3);
+}
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 213, 79, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(255, 213, 79, 0.5); }
+}
+.timer-display {
+    font-size: 4rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: var(--accent);
+}
+.timer-label {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 0.5rem;
+}
+.session-count {
+    display: flex;
+    gap: 8px;
+    margin: 1rem 0;
+}
+.session-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s;
+}
+.session-dot.completed {
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+.btn-pomodoro {
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    margin: 0.5rem;
+}
+.pomodoro-xp {
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-top: 1rem;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+.pomodoro-xp.show { opacity: 1; }
+</style>
+
+<div class="pomodoro-container">
+    <h4><i class="bi bi-clock-history me-2" style="color: var(--accent);"></i>Pomodoro</h4>
+    <p class="text-muted">Estudiá enfocado y ganá XP por cada sesión completada</p>
+
+    <div class="pomodoro-timer" id="pomodoroTimer">
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="timer-label" id="timerLabel">Sesión de estudio</div>
+    </div>
+
+    <div class="session-count" id="sessionDots">
+        <div class="session-dot" data-session="1"></div>
+        <div class="session-dot" data-session="2"></div>
+        <div class="session-dot" data-session="3"></div>
+        <div class="session-dot" data-session="4"></div>
+    </div>
+
+    <div>
+        <button class="btn btn-primary btn-pomodoro" id="btnStart" onclick="toggleTimer()">
+            <i class="bi bi-play-fill me-1"></i>Iniciar
+        </button>
+        <button class="btn btn-outline-secondary btn-pomodoro" id="btnReset" onclick="resetTimer()">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+        </button>
+    </div>
+
+    <div class="pomodoro-xp" id="pomodoroXp">+10 XP ganados</div>
+
+    <div class="mt-4 text-center">
+        <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            25 min estudio = +10 XP · 5 min descanso · 4 sesiones = +50 XP bonus
+        </small>
+    </div>
+</div>
+
+<script>
+const WORK_TIME = 25 * 60;
+const BREAK_TIME = 5 * 60;
+const LONG_BREAK_TIME = 15 * 60;
+const XP_PER_SESSION = 10;
+const XP_BONUS = 50;
+
+let timeLeft = WORK_TIME;
+let isRunning = false;
+let isBreak = false;
+let currentSession = 0;
+let totalSessions = 4;
+let timerInterval = null;
+
+function updateDisplay() {
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+    document.getElementById('timerDisplay').textContent =
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function toggleTimer() {
+    if (isRunning) {
+        pauseTimer();
+    } else {
+        startTimer();
+    }
+}
+
+function startTimer() {
+    isRunning = true;
+    document.getElementById('btnStart').innerHTML = '<i class="bi bi-pause-fill me-1"></i>Pausar';
+    document.getElementById('pomodoroTimer').classList.add('active');
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            onTimerComplete();
+        }
+    }, 1000);
+}
+
+function pauseTimer() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    document.getElementById('btnStart').innerHTML = '<i class="bi bi-play-fill me-1"></i>Reanudar';
+    document.getElementById('pomodoroTimer').classList.remove('active');
+}
+
+function resetTimer() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    isBreak = false;
+    timeLeft = WORK_TIME;
+    updateDisplay();
+    document.getElementById('btnStart').innerHTML = '<i class="bi bi-play-fill me-1"></i>Iniciar';
+    document.getElementById('pomodoroTimer').classList.remove('active', 'break-mode');
+    document.getElementById('timerLabel').textContent = 'Sesión de estudio';
+}
+
+function onTimerComplete() {
+    if (!isBreak) {
+        currentSession++;
+        updateSessionDots();
+
+        // XP por sesión completada
+        let xp = XP_PER_SESSION;
+        if (currentSession === totalSessions) {
+            xp += XP_BONUS;
+        }
+
+        showXpReward(xp);
+        savePomodoroSession(xp);
+
+        // Cambiar a descanso
+        isBreak = true;
+        timeLeft = currentSession === totalSessions ? LONG_BREAK_TIME : BREAK_TIME;
+        document.getElementById('timerLabel').textContent =
+            currentSession === totalSessions ? 'Descanso largo' : 'Descanso';
+        document.getElementById('pomodoroTimer').classList.remove('active');
+        document.getElementById('pomodoroTimer').classList.add('break-mode');
+        document.getElementById('btnStart').innerHTML = '<i class="bi bi-play-fill me-1"></i>Iniciar';
+
+        if (currentSession >= totalSessions) {
+            currentSession = 0;
+            setTimeout(resetSessionDots, (timeLeft + 2) * 1000);
+        }
+    } else {
+        // Volver a estudio
+        isBreak = false;
+        timeLeft = WORK_TIME;
+        document.getElementById('timerLabel').textContent = 'Sesión de estudio';
+        document.getElementById('pomodoroTimer').classList.remove('break-mode');
+        document.getElementById('btnStart').innerHTML = '<i class="bi bi-play-fill me-1"></i>Iniciar';
+    }
+    updateDisplay();
+}
+
+function updateSessionDots() {
+    document.querySelectorAll('.session-dot').forEach((dot, i) => {
+        if (i < currentSession) dot.classList.add('completed');
+    });
+}
+
+function resetSessionDots() {
+    document.querySelectorAll('.session-dot').forEach(dot => {
+        dot.classList.remove('completed');
+    });
+}
+
+function showXpReward(xp) {
+    const el = document.getElementById('pomodoroXp');
+    el.textContent = `+${xp} XP ganados`;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function savePomodoroSession(xp) {
+    fetch('/pomodoro/save/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ xp: xp })
+    });
+}
+
+updateDisplay();
+</script>
+
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endblock %}

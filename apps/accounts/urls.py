@@ -1,4 +1,4 @@
-"""URLs de accounts: home, auth, perfil, GitHub, notificaciones, join, school admin."""
+"""URLs de accounts: home, auth, perfil, GitHub, notificaciones, join, school admin, pomodoro."""
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
@@ -16,6 +16,10 @@ urlpatterns = [
     path('notificaciones/', views.notification_list, name='notification_list'),
     path('notificaciones/<int:pk>/leer/', views.notification_read, name='notification_read'),
     path('join/<str:code>/', views.join, name='join'),
+
+    # Pomodoro
+    path('pomodoro/', views.pomodoro, name='pomodoro'),
+    path('pomodoro/save/', views.pomodoro_save, name='pomodoro_save'),
 
     # School Admin
     path('escuela/', school_dashboard, name='school_dashboard'),
