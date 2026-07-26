@@ -1,4 +1,4 @@
-"""URLs de gamification: Quiz, Tips, Rewards, Badges, Class Mode, Quick Quiz."""
+"""URLs de gamification: Quiz, Tips, Rewards, Badges, Rankings, Class Mode, Quick Quiz."""
 from django.urls import path
 from . import views
 
@@ -28,6 +28,10 @@ urlpatterns = [
     path('badges/', views.badge_list, name='badge_list'),
     path('badges/create/', views.badge_create, name='badge_create'),
     path('badges/<int:pk>/award/', views.badge_award, name='badge_award'),
+
+    # === RANKINGS ===
+    path('ranking/<int:course_pk>/', views.course_ranking, name='course_ranking'),
+    path('ranking/', views.courses_ranking, name='courses_ranking'),
 
     # === MODO CLASE / PRESENTACIÓN ===
     path('presentacion/<int:course_pk>/', views.presentation_mode, name='presentation_mode'),

@@ -121,8 +121,30 @@
                                 <small class="text-muted">Horarios</small>
                             </div>
                         </div>
+                        <hr>
+                        <!-- Productividad del curso -->
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="fw-bold fs-4 text-warning">{{ course_stats.total_tasks }}</div>
+                                <small class="text-muted">Tareas</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-4 text-success">{{ course_stats.completion_rate }}%</div>
+                                <small class="text-muted">Entrega</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-4" style="color: var(--accent);">{{ course_stats.total_xp_generated }}</div>
+                                <small class="text-muted">XP total</small>
+                            </div>
+                        </div>
+                        <div class="text-center mb-3">
+                            <small class="text-muted">Nota promedio: <strong>{{ course_stats.avg_score }}</strong> · Tareas vencidas: <strong class="{% if course_stats.overdue_tasks > 0 %}text-danger{% else %}text-success{% endif %}">{{ course_stats.overdue_tasks }}</strong></small>
+                        </div>
+                        <a href="{% url 'gamification:course_ranking' course.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-trophy me-1"></i>Ver Ranking del Curso
+                        </a>
                         {% if is_student %}
-                        <div class="alert alert-info mb-0">
+                        <div class="alert alert-info mb-0 mt-3">
                             <i class="bi bi-info-circle me-1"></i>
                             Estás inscrito como estudiante en este curso.
                         </div>

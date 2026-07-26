@@ -578,3 +578,66 @@ def quick_quiz_create(request):
         return redirect('gamification:quiz_list')
 
     return render(request, 'gamification/quick_quiz_form.html', {'my_courses': my_courses})
+
+
+# === RANKINGS ===
+
+@login_required
+def course_ranking(request, course_pk):
+    """Ranking de estudiantes por curso con estadísticas de productividad."""
+    from apps.gamification.models import Ranking
+
+    course = get_object_or_404(Course, pk=course_pk)
+
+    is_teacher = TeacherCourse.objects.filter(
+        course=course, teacher=request.user
+    ).exists()
+    is_student = StudentCourse.objects.filter(
+        student=request.user, course=course, status=StudentCourse.Status.ACTIVE
+    ).exists()
+
+    if not (is_teacher or is_student or request.user.role == User.Role.PROGRAMMER):
+        messages.error(request, 'No tienes acceso a este curso.')
+        return redirect('home')
+
+    if is_teacher or request.user.role == User.Role.PROGRAMMER:
+        Ranking.generate_weekly(course)
+        Ranking.generate_monthly(course)
+
+    weekly_rankings = Ranking.objects.filter(
+        course=course, period=Ranking.Period.WEEKLY
+    ).select_related('student').order_by('position')
+
+    monthly_rankings = Ranking.objects.filter(
+        course=course, period=Ranking.Period.MONTHLY
+    ).select_related('student').order_by('position')
+
+    stats = Ranking.get_course_stats(course)
+
+    student_rank = None
+    if is_student:
+        student_rank = weekly_rankings.filter(student=request.user).first()
+
+    context = {
+        'course': course,
+        'is_teacher': is_teacher,
+        'is_student': is_student,
+        'weekly_rankings': weekly_rankings,
+        'monthly_rankings': monthly_rankings,
+        'stats': stats,
+        'student_rank': student_rank,
+    }
+    return render(request, 'gamification/course_ranking.html', context)
+
+
+@login_required
+def courses_ranking(request):
+    """Ranking entre cursos: compara rendimiento promedio."""
+    from apps.gamification.models import Ranking
+
+    rankings = Ranking.get_all_courses_ranking()
+
+    context = {
+        'rankings': rankings,
+    }
+    return render(request, 'gamification/courses_ranking.html', context)

@@ -14,7 +14,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from apps.courses.models import StudentCourse
+from apps.courses.models import Course, StudentCourse
 
 
 class TipTransaction(models.Model):
@@ -113,6 +113,7 @@ class Badge(models.Model):
     color = models.CharField(max_length=20, default='gold', help_text='Color CSS o clase')
     xp_reward = models.PositiveIntegerField(default=0, help_text='XP extra al ganarla')
     is_secret = models.BooleanField(default=False, help_text='No visible hasta ganarla')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='badges_created')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -317,78 +318,83 @@ class Ranking(models.Model):
         return f"{self.course.name} - #{self.position} {self.student.email} ({self.get_period_display()})"
 
     @classmethod
-    def generate_weekly(cls, course):
-        """Genera ranking semanal para un curso."""
-        from django.db.models import Sum, Count, Q
+    def _calculate_student_course_xp(cls, student, course, start_date, end_date):
+        """Calcula todo el XP de un estudiante en un curso dentro de un período."""
         from apps.tasks.models import Task
+        from django.db.models import Sum
+
+        total_xp = 0
+
+        # 1. XP de tareas completadas (score de la tarea)
+        task_xp = Task.objects.filter(
+            course=course,
+            assigned_to=student,
+            is_completed=True,
+            completed_at__date__gte=start_date,
+            completed_at__date__lte=end_date,
+        ).aggregate(total=Sum('score'))['total'] or 0
+        total_xp += task_xp
+
+        # 2. XP de Tips recibidos en este curso
+        tip_xp = cls.objects.none()  # placeholder
+        from apps.gamification.models import TipTransaction
+        tip_xp = TipTransaction.objects.filter(
+            student=student,
+            course=course,
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+        ).aggregate(total=Sum('xp_amount'))['total'] or 0
+        total_xp += tip_xp
+
+        # 3. XP de Quizzes completados en este curso
+        from apps.gamification.models import QuizAttempt
+        quiz_xp = QuizAttempt.objects.filter(
+            student=student,
+            quiz__course=course,
+            passed=True,
+            submitted_at__date__gte=start_date,
+            submitted_at__date__lte=end_date,
+        ).aggregate(total=Sum('xp_earned'))['total'] or 0
+        total_xp += quiz_xp
+
+        # 4. XP de Badges ganados en este curso
+        from apps.gamification.models import StudentBadge
+        badge_xp = StudentBadge.objects.filter(
+            student=student,
+            course=course,
+            earned_at__date__gte=start_date,
+            earned_at__date__lte=end_date,
+        ).aggregate(total=Sum('xp_awarded'))['total'] or 0
+        total_xp += badge_xp
+
+        return total_xp
+
+    @classmethod
+    def _count_completed_tasks(cls, student, course, start_date, end_date):
+        """Cuenta tareas completadas en un curso dentro de un período."""
+        from apps.tasks.models import Task
+        return Task.objects.filter(
+            course=course,
+            assigned_to=student,
+            is_completed=True,
+            completed_at__date__gte=start_date,
+            completed_at__date__lte=end_date,
+        ).count()
+
+    @classmethod
+    def generate_weekly(cls, course):
+        """Genera ranking semanal para un curso (todas las fuentes de XP)."""
         from datetime import timedelta
 
         today = timezone.now().date()
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
 
-        students = StudentCourse.objects.filter(
-            course=course, status=StudentCourse.Status.ACTIVE
-        ).select_related('student')
-
-        rankings = []
-        for enrollment in students:
-            student = enrollment.student
-            xp_earned = Task.objects.filter(
-                course=course,
-                assigned_to=student,
-                is_completed=True,
-                completed_at__date__gte=week_start,
-                completed_at__date__lte=week_end,
-            ).aggregate(total=Sum('score'))['total'] or 0
-
-            tasks_completed = Task.objects.filter(
-                course=course,
-                assigned_to=student,
-                is_completed=True,
-                completed_at__date__gte=week_start,
-                completed_at__date__lte=week_end,
-            ).count()
-
-            if xp_earned > 0 or tasks_completed > 0:
-                rankings.append({
-                    'student': student,
-                    'xp_earned': xp_earned,
-                    'total_xp': student.xp,
-                    'tasks_completed': tasks_completed,
-                })
-
-        # Ordenar por XP ganado
-        rankings.sort(key=lambda x: x['xp_earned'], reverse=True)
-
-        # Crear snapshots
-        cls.objects.filter(
-            course=course,
-            period=cls.Period.WEEKLY,
-            period_start=week_start,
-        ).delete()
-
-        for i, r in enumerate(rankings, 1):
-            cls.objects.create(
-                course=course,
-                period=cls.Period.WEEKLY,
-                student=r['student'],
-                position=i,
-                xp_earned=r['xp_earned'],
-                total_xp=r['total_xp'],
-                tasks_completed=r['tasks_completed'],
-                period_start=week_start,
-                period_end=week_end,
-            )
-
-        return len(rankings)
+        return cls._generate_ranking(course, cls.Period.WEEKLY, week_start, week_end)
 
     @classmethod
     def generate_monthly(cls, course):
-        """Genera ranking mensual para un curso."""
-        from django.db.models import Sum, Count
-        from apps.tasks.models import Task
-        from datetime import timedelta
+        """Genera ranking mensual para un curso (todas las fuentes de XP)."""
         import calendar
 
         today = timezone.now().date()
@@ -396,6 +402,11 @@ class Ranking(models.Model):
         last_day = calendar.monthrange(today.year, today.month)[1]
         month_end = today.replace(day=last_day)
 
+        return cls._generate_ranking(course, cls.Period.MONTHLY, month_start, month_end)
+
+    @classmethod
+    def _generate_ranking(cls, course, period, start_date, end_date):
+        """Genera ranking genérico incluyendo TODAS las fuentes de XP."""
         students = StudentCourse.objects.filter(
             course=course, status=StudentCourse.Status.ACTIVE
         ).select_related('student')
@@ -403,21 +414,8 @@ class Ranking(models.Model):
         rankings = []
         for enrollment in students:
             student = enrollment.student
-            xp_earned = Task.objects.filter(
-                course=course,
-                assigned_to=student,
-                is_completed=True,
-                completed_at__date__gte=month_start,
-                completed_at__date__lte=month_end,
-            ).aggregate(total=Sum('score'))['total'] or 0
-
-            tasks_completed = Task.objects.filter(
-                course=course,
-                assigned_to=student,
-                is_completed=True,
-                completed_at__date__gte=month_start,
-                completed_at__date__lte=month_end,
-            ).count()
+            xp_earned = cls._calculate_student_course_xp(student, course, start_date, end_date)
+            tasks_completed = cls._count_completed_tasks(student, course, start_date, end_date)
 
             if xp_earned > 0 or tasks_completed > 0:
                 rankings.append({
@@ -431,21 +429,129 @@ class Ranking(models.Model):
 
         cls.objects.filter(
             course=course,
-            period=cls.Period.MONTHLY,
-            period_start=month_start,
+            period=period,
+            period_start=start_date,
         ).delete()
 
         for i, r in enumerate(rankings, 1):
             cls.objects.create(
                 course=course,
-                period=cls.Period.MONTHLY,
+                period=period,
                 student=r['student'],
                 position=i,
                 xp_earned=r['xp_earned'],
                 total_xp=r['total_xp'],
                 tasks_completed=r['tasks_completed'],
-                period_start=month_start,
-                period_end=month_end,
+                period_start=start_date,
+                period_end=end_date,
             )
 
         return len(rankings)
+
+    @classmethod
+    def get_course_stats(cls, course):
+        """Retorna estadísticas de productividad de un curso."""
+        from apps.tasks.models import Task
+        from django.db.models import Avg, Count, Q, Sum
+        from apps.gamification.models import TipTransaction, QuizAttempt, StudentBadge
+
+        students = StudentCourse.objects.filter(
+            course=course, status=StudentCourse.Status.ACTIVE
+        )
+
+        total_students = students.count()
+        total_tasks = Task.objects.filter(course=course).count()
+        completed_tasks = Task.objects.filter(course=course, is_completed=True).count()
+        completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+
+        avg_score = Task.objects.filter(
+            course=course, is_completed=True, score__isnull=False
+        ).aggregate(avg=Avg('score'))['avg'] or 0
+
+        total_tips_xp = TipTransaction.objects.filter(course=course).aggregate(
+            total=Sum('xp_amount'))['total'] or 0
+
+        total_quiz_xp = QuizAttempt.objects.filter(
+            quiz__course=course, passed=True
+        ).aggregate(total=Sum('xp_earned'))['total'] or 0
+
+        total_badge_xp = StudentBadge.objects.filter(
+            course=course
+        ).aggregate(total=Sum('xp_awarded'))['total'] or 0
+
+        total_xp_generated = total_tips_xp + total_quiz_xp + total_badge_xp
+
+        overdue_tasks = Task.objects.filter(
+            course=course,
+            is_completed=False,
+            deadline__lt=timezone.now(),
+        ).count()
+
+        return {
+            'total_students': total_students,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'completion_rate': round(completion_rate, 1),
+            'avg_score': round(avg_score, 1),
+            'overdue_tasks': overdue_tasks,
+            'total_tips_xp': total_tips_xp,
+            'total_quiz_xp': total_quiz_xp,
+            'total_badge_xp': total_badge_xp,
+            'total_xp_generated': total_xp_generated,
+        }
+
+    @classmethod
+    def get_all_courses_ranking(cls):
+        """Ranking entre cursos: compara rendimiento promedio."""
+        from apps.tasks.models import Task
+        from apps.gamification.models import TipTransaction, QuizAttempt, StudentBadge
+        from django.db.models import Avg, Sum, Count, Q, F
+
+        courses = Course.objects.filter(status=Course.Status.ACTIVE).annotate(
+            active_students=Count(
+                'student_enrollments',
+                filter=Q(student_enrollments__status=StudentCourse.Status.ACTIVE)
+            ),
+            total_tasks=Count('tasks'),
+            completed_tasks=Count('tasks', filter=Q(tasks__is_completed=True)),
+        ).filter(active_students__gt=0)
+
+        course_data = []
+        for course in courses:
+            total_tasks = course.total_tasks
+            completed_tasks = course.completed_tasks
+            completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+
+            avg_score = Task.objects.filter(
+                course=course, is_completed=True, score__isnull=False
+            ).aggregate(avg=Avg('score'))['avg'] or 0
+
+            tips_xp = TipTransaction.objects.filter(course=course).aggregate(
+                total=Sum('xp_amount'))['total'] or 0
+            quiz_xp = QuizAttempt.objects.filter(
+                quiz__course=course, passed=True
+            ).aggregate(total=Sum('xp_earned'))['total'] or 0
+            badge_xp = StudentBadge.objects.filter(
+                course=course
+            ).aggregate(total=Sum('xp_awarded'))['total'] or 0
+
+            total_xp = tips_xp + quiz_xp + badge_xp
+            avg_xp_per_student = (total_xp / course.active_students) if course.active_students > 0 else 0
+
+            course_data.append({
+                'course': course,
+                'active_students': course.active_students,
+                'total_tasks': total_tasks,
+                'completed_tasks': completed_tasks,
+                'completion_rate': round(completion_rate, 1),
+                'avg_score': round(avg_score, 1),
+                'total_xp_generated': total_xp,
+                'avg_xp_per_student': round(avg_xp_per_student, 1),
+            })
+
+        course_data.sort(key=lambda x: x['avg_xp_per_student'], reverse=True)
+
+        for i, data in enumerate(course_data, 1):
+            data['position'] = i
+
+        return course_data

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Ranking entre Cursos - StarStudy{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-bar-chart-line me-2" style="color: var(--accent);"></i>Ranking entre Cursos</h4>
+        <small class="text-muted">Comparativa de rendimiento promedio por curso</small>
+    </div>
+</div>
+
+{% if rankings %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 60px;" class="text-center">#</th>
+                <th>Curso</th>
+                <th class="text-center">Estudiantes</th>
+                <th class="text-center d-none d-md-table-cell">Tareas</th>
+                <th class="text-center">Entrega</th>
+                <th class="text-center d-none d-md-table-cell">Nota prom.</th>
+                <th class="text-center">XP prom./alumno</th>
+                <th class="text-center d-none d-lg-table-cell">XP total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rankings %}
+            <tr class="{% if r.position == 1 %}table-warning{% elif r.position == 2 %}table-secondary{% elif r.position == 3 %}table-danger{% endif %}">
+                <td class="text-center fw-bold">
+                    {% if r.position == 1 %}
+                        <i class="bi bi-trophy-fill text-warning" style="font-size: 1.2rem;"></i>
+                    {% elif r.position == 2 %}
+                        <i class="bi bi-trophy-fill text-secondary" style="font-size: 1.1rem;"></i>
+                    {% elif r.position == 3 %}
+                        <i class="bi bi-trophy-fill" style="color: #cd7f32; font-size: 1rem;"></i>
+                    {% else %}
+                        {{ r.position }}
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'gamification:course_ranking' r.course.pk %}" class="text-decoration-none fw-semibold">
+                        {{ r.course.name }}
+                        <small class="text-muted">({{ r.course.academic_year }})</small>
+                    </a>
+                </td>
+                <td class="text-center">{{ r.active_students }}</td>
+                <td class="text-center d-none d-md-table-cell">{{ r.completed_tasks }}/{{ r.total_tasks }}</td>
+                <td class="text-center">
+                    <span class="badge {% if r.completion_rate >= 70 %}bg-success{% elif r.completion_rate >= 40 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                        {{ r.completion_rate }}%
+                    </span>
+                </td>
+                <td class="text-center d-none d-md-table-cell">{{ r.avg_score }}</td>
+                <td class="text-center fw-bold" style="color: var(--accent);">{{ r.avg_xp_per_student }} XP</td>
+                <td class="text-center d-none d-lg-table-cell">{{ r.total_xp_generated }} XP</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Cards resumen para móvil -->
+<div class="d-md-none">
+    {% for r in rankings %}
+    <div class="card mb-3 {% if r.position == 1 %}border-warning{% elif r.position == 2 %}border-secondary{% elif r.position == 3 %}border-danger{% endif %}">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="mb-1">
+                        {% if r.position <= 3 %}<i class="bi bi-trophy-fill me-1" style="color: {% if r.position == 1 %}gold{% elif r.position == 2 %}silver{% else %}#cd7f32{% endif %};"></i>{% endif %}
+                        #{{ r.position }} {{ r.course.name }}
+                    </h5>
+                    <small class="text-muted">{{ r.course.academic_year }} · {{ r.active_students }} estudiantes</small>
+                </div>
+                <span class="badge bg-primary fs-6">{{ r.avg_xp_per_student }} XP</span>
+            </div>
+            <div class="row mt-2 text-center">
+                <div class="col-4">
+                    <small class="text-muted d-block">Entrega</small>
+                    <strong>{{ r.completion_rate }}%</strong>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted d-block">Nota prom.</small>
+                    <strong>{{ r.avg_score }}</strong>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted d-block">XP total</small>
+                    <strong>{{ r.total_xp_generated }}</strong>
+                </div>
+            </div>
+            <a href="{% url 'gamification:course_ranking' r.course.pk %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                <i class="bi bi-trophy me-1"></i>Ver ranking del curso
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-bar-chart-line display-1 text-muted mb-3"></i>
+    <h5 class="text-muted">Sin datos de cursos</h5>
+    <p class="text-muted">No hay cursos activos con actividad registrada.</p>
+</div>
+{% endif %}
+
+{% endblock %}

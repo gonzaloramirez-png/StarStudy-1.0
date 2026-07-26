@@ -124,6 +124,10 @@ def course_detail(request, pk):
     # Profesores
     teachers = TeacherCourse.objects.filter(course=course).select_related('teacher', 'assigned_by')
 
+    # Estadísticas de productividad del curso
+    from apps.gamification.models import Ranking
+    course_stats = Ranking.get_course_stats(course)
+
     context = {
         'course': course,
         'invite_code': invite_code,
@@ -133,6 +137,7 @@ def course_detail(request, pk):
         'is_student': is_student,
         'teacher_role_choices': TeacherCourse.Role.choices,
         'student_status_choices': StudentCourse.Status.choices,
+        'course_stats': course_stats,
     }
     return render(request, 'courses/course_detail.html', context)
 

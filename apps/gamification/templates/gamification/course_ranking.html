@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}Ranking - {{ course.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-trophy me-2" style="color: var(--accent);"></i>Ranking del Curso</h4>
+        <small class="text-muted">{{ course.name }} · {{ course.academic_year }}</small>
+    </div>
+    <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver al curso
+    </a>
+</div>
+
+<!-- Estadísticas del curso -->
+<div class="row g-2 g-md-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-primary">
+            <div class="card-body py-2 py-md-3 text-center">
+                <h6 class="mb-1">Estudiantes</h6>
+                <h3 class="mb-0">{{ stats.total_students }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-success">
+            <div class="card-body py-2 py-md-3 text-center">
+                <h6 class="mb-1">Tasa de entrega</h6>
+                <h3 class="mb-0">{{ stats.completion_rate }}%</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-bg-warning">
+            <div class="card-body py-2 py-md-3 text-center">
+                <h6 class="mb-1">Nota promedio</h6>
+                <h3 class="mb-0">{{ stats.avg_score }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body py-2 py-md-3 text-center">
+                <h6 class="mb-1">XP total generado</h6>
+                <h3 class="mb-0">{{ stats.total_xp_generated }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Desglose de XP -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Fuentes de XP del curso</div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4 mb-2">
+                <div class="border rounded p-3">
+                    <i class="bi bi-list-task display-6 text-primary"></i>
+                    <h5 class="mt-2 mb-0">{{ stats.total_tasks }}</h5>
+                    <small class="text-muted">Tareas totales</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="border rounded p-3">
+                    <i class="bi bi-hand-thumbs-up display-6 text-success"></i>
+                    <h5 class="mt-2 mb-0">{{ stats.total_tips_xp }} XP</h5>
+                    <small class="text-muted">Tips manuales</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="border rounded p-3">
+                    <i class="bi bi-puzzle display-6 text-warning"></i>
+                    <h5 class="mt-2 mb-0">{{ stats.total_quiz_xp }} XP</h5>
+                    <small class="text-muted">Quizzes</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mi posición (solo estudiantes) -->
+{% if student_rank %}
+<div class="card mb-4 border-primary">
+    <div class="card-body text-center py-3">
+        <h5 class="mb-1" style="color: var(--accent);">
+            <i class="bi bi-star-fill me-1"></i>Tu posición semanal: #{{ student_rank.position }}
+        </h5>
+        <p class="mb-0 text-muted">
+            {{ student_rank.xp_earned }} XP ganados esta semana · {{ student_rank.tasks_completed }} tareas completadas
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabs de ranking -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#weekly" type="button">
+            <i class="bi bi-calendar-week me-1"></i>Semanal
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#monthly" type="button">
+            <i class="bi bi-calendar-month me-1"></i>Mensual
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Ranking Semanal -->
+    <div class="tab-pane fade show active" id="weekly">
+        {% if weekly_rankings %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 60px;" class="text-center">#</th>
+                        <th>Estudiante</th>
+                        <th class="text-center">Tareas</th>
+                        <th class="text-center">XP ganado</th>
+                        <th class="text-center d-none d-md-table-cell">XP total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in weekly_rankings %}
+                    <tr class="{% if r.position == 1 %}table-warning{% elif r.position == 2 %}table-secondary{% elif r.position == 3 %}table-danger{% endif %}">
+                        <td class="text-center fw-bold">
+                            {% if r.position == 1 %}
+                                <i class="bi bi-trophy-fill text-warning" style="font-size: 1.2rem;"></i>
+                            {% elif r.position == 2 %}
+                                <i class="bi bi-trophy-fill text-secondary" style="font-size: 1.1rem;"></i>
+                            {% elif r.position == 3 %}
+                                <i class="bi bi-trophy-fill" style="color: #cd7f32; font-size: 1rem;"></i>
+                            {% else %}
+                                {{ r.position }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="{{ r.student.get_avatar_url }}" alt="" class="rounded-circle" width="32" height="32">
+                                <div>
+                                    <div class="fw-semibold">{{ r.student.get_full_name|default:r.student.email }}</div>
+                                    <small class="text-muted d-md-none">{{ r.xp_earned }} XP</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">{{ r.tasks_completed }}</td>
+                        <td class="text-center fw-bold" style="color: var(--accent);">{{ r.xp_earned }} XP</td>
+                        <td class="text-center d-none d-md-table-cell">{{ r.total_xp }} XP</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-trophy display-1 text-muted mb-3"></i>
+            <h5 class="text-muted">Sin datos esta semana</h5>
+            <p class="text-muted">Aún no hay actividad registrada esta semana.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Ranking Mensual -->
+    <div class="tab-pane fade" id="monthly">
+        {% if monthly_rankings %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 60px;" class="text-center">#</th>
+                        <th>Estudiante</th>
+                        <th class="text-center">Tareas</th>
+                        <th class="text-center">XP ganado</th>
+                        <th class="text-center d-none d-md-table-cell">XP total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in monthly_rankings %}
+                    <tr class="{% if r.position == 1 %}table-warning{% elif r.position == 2 %}table-secondary{% elif r.position == 3 %}table-danger{% endif %}">
+                        <td class="text-center fw-bold">
+                            {% if r.position == 1 %}
+                                <i class="bi bi-trophy-fill text-warning" style="font-size: 1.2rem;"></i>
+                            {% elif r.position == 2 %}
+                                <i class="bi bi-trophy-fill text-secondary" style="font-size: 1.1rem;"></i>
+                            {% elif r.position == 3 %}
+                                <i class="bi bi-trophy-fill" style="color: #cd7f32; font-size: 1rem;"></i>
+                            {% else %}
+                                {{ r.position }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="{{ r.student.get_avatar_url }}" alt="" class="rounded-circle" width="32" height="32">
+                                <div>
+                                    <div class="fw-semibold">{{ r.student.get_full_name|default:r.student.email }}</div>
+                                    <small class="text-muted d-md-none">{{ r.xp_earned }} XP</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">{{ r.tasks_completed }}</td>
+                        <td class="text-center fw-bold" style="color: var(--accent);">{{ r.xp_earned }} XP</td>
+                        <td class="text-center d-none d-md-table-cell">{{ r.total_xp }} XP</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-trophy display-1 text-muted mb-3"></i>
+            <h5 class="text-muted">Sin datos este mes</h5>
+            <p class="text-muted">Aún no hay actividad registrada este mes.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
