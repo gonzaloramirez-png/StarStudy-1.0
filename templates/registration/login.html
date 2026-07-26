@@ -26,7 +26,12 @@
 
                     <div class="mb-3">
                         <label class="form-label" for="id_password">{{ form.password.label }}</label>
-                        {{ form.password }}
+                        <div class="input-group">
+                            {{ form.password }}
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" aria-label="Mostrar contraseña">
+                                <i class="bi bi-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">Entrar</button>
@@ -40,5 +45,19 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const input = document.getElementById('id_password');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+});
+</script>
 
 {% endblock %}
