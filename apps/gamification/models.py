@@ -279,6 +279,11 @@ class QuizAttempt(models.Model):
         if self.passed:
             self.xp_earned = self.quiz.xp_reward
             self.student.add_xp(self.xp_earned, source=f'Quiz: {self.quiz.title}')
+
+            # Registrar actividad para streaks
+            from apps.accounts.models import UserActivity
+            UserActivity.record_activity(self.student, 'quiz')
+
             # Notificar al estudiante con link al loot box
             from apps.accounts.models import Notification
             Notification.objects.create(

@@ -140,3 +140,96 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.message[:50]}"
+
+
+class UserActivity(models.Model):
+    """Registro de actividad diaria del usuario para streaks.
+
+    Se crea/actualiza automáticamente cuando el usuario realiza acciones:
+    - Completar una tarea
+    - Recibir un tip
+    - Completar un quiz
+    - Login diario
+    """
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='activities')
+    date = models.DateField(db_index=True)
+    tasks_completed = models.PositiveIntegerField(default=0)
+    xp_earned = models.PositiveIntegerField(default=0)
+    quizzes_completed = models.PositiveIntegerField(default=0)
+    tips_received = models.PositiveIntegerField(default=0)
+    login_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'date']
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.date}"
+
+    @classmethod
+    def record_activity(cls, user, activity_type='login'):
+        """Registra una actividad y retorna la racha actual."""
+        today = timezone.now().date()
+        activity, created = cls.objects.get_or_create(
+            user=user,
+            date=today,
+            defaults={f'{activity_type}_count': 1 if activity_type == 'login' else 0}
+        )
+
+        if not created:
+            if activity_type == 'login':
+                activity.login_count += 1
+            elif activity_type == 'task':
+                activity.tasks_completed += 1
+            elif activity_type == 'quiz':
+                activity.quizzes_completed += 1
+            elif activity_type == 'tip':
+                activity.tips_received += 1
+            activity.save()
+
+        return cls.get_streak(user)
+
+    @classmethod
+    def get_streak(cls, user):
+        """Calcula la racha actual de días consecutivos de actividad."""
+        today = timezone.now().date()
+        streak = 0
+        check_date = today
+
+        while True:
+            if cls.objects.filter(user=user, date=check_date).exists():
+                streak += 1
+                check_date -= timezone.timedelta(days=1)
+            else:
+                break
+
+        return streak
+
+    @classmethod
+    def get_best_streak(cls, user):
+        """Retorna la mejor racha histórica (aproximación)."""
+        from django.db.models import Max
+        # Simple: contar días con actividad en los últimos 365 días
+        year_ago = timezone.now().date() - timezone.timedelta(days=365)
+        active_days = cls.objects.filter(
+            user=user, date__gte=year_ago
+        ).values_list('date', flat=True).order_by('-date')
+
+        if not active_days:
+            return 0
+
+        best = 0
+        current = 0
+        prev_date = None
+
+        for day in active_days:
+            if prev_date and (prev_date - day).days == 1:
+                current += 1
+            else:
+                current = 1
+            best = max(best, current)
+            prev_date = day
+
+        return best

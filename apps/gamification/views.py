@@ -208,6 +208,10 @@ def tip_create(request):
         # Añadir XP al estudiante
         tip.student.add_xp(tip.xp_amount, source=f'Tip: {tip.reason}')
 
+        # Registrar actividad para streaks
+        from apps.accounts.models import UserActivity
+        UserActivity.record_activity(tip.student, 'tip')
+
         # Notificar con link al loot box
         from apps.accounts.models import Notification
         Notification.objects.create(

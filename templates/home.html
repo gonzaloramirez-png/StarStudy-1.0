@@ -52,7 +52,31 @@
                          aria-valuenow="{{ xp_percent }}" aria-valuemin="0" aria-valuemax="100">
                     </div>
                 </div>
-                <small class="text-white-50">{{ xp }}/{{ next_level_xp }} XP • {{ xp_needed }} tareas para siguiente nivel</small>
+                <small class="text-white-50">{{ xp }}/{{ next_level_xp }} XP</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Streaks -->
+<div class="row g-2 g-md-3 mb-4">
+    <div class="col-12">
+        <div class="card" style="border-left: 4px solid #ff6b35;">
+            <div class="card-body py-2 py-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size: 2rem;">&#x1F525;</span>
+                        <div>
+                            <h6 class="mb-0">Racha actual: <strong style="color: #ff6b35;">{{ current_streak }} día{{ current_streak|pluralize }}</strong></h6>
+                            <small class="text-muted">Mejor racha: {{ best_streak }} día{{ best_streak|pluralize }}</small>
+                        </div>
+                    </div>
+                    {% if current_streak >= 7 %}
+                    <span class="badge" style="background: #ff6b35; font-size: 0.9rem;">&#x1F525; ¡En racha!</span>
+                    {% elif current_streak >= 3 %}
+                    <span class="badge bg-warning text-dark" style="font-size: 0.9rem;">&#x1F440; Buena racha</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

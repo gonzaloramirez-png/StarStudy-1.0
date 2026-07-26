@@ -19,6 +19,12 @@ def home(request):
     now = timezone.now()
     is_student = user.role == User.Role.STUDENT
 
+    # Registrar login diario para streaks
+    from apps.accounts.models import UserActivity
+    UserActivity.record_activity(user, 'login')
+    current_streak = UserActivity.get_streak(user)
+    best_streak = UserActivity.get_best_streak(user)
+
     # Cursos del usuario para el selector en navbar
     if user.role in [User.Role.TEACHER, User.Role.STAFF, User.Role.PROGRAMMER]:
         user_courses = Course.objects.filter(
@@ -93,6 +99,8 @@ def home(request):
         'user_courses': user_courses,
         'selected_course': selected_course,
         'now': now,
+        'current_streak': current_streak,
+        'best_streak': best_streak,
     }
 
     return render(request, 'home.html', context)

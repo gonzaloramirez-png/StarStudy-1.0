@@ -75,6 +75,10 @@ def complete_task(task, user):
         )
         invalidate_unread(task.assigned_by)
 
+    # Registrar actividad para streaks
+    from apps.accounts.models import UserActivity
+    UserActivity.record_activity(user, 'task')
+
     return task
 
 
