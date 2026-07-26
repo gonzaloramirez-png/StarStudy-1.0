@@ -279,12 +279,12 @@ class QuizAttempt(models.Model):
         if self.passed:
             self.xp_earned = self.quiz.xp_reward
             self.student.add_xp(self.xp_earned, source=f'Quiz: {self.quiz.title}')
-            # Notificar al estudiante
+            # Notificar al estudiante con link al loot box
             from apps.accounts.models import Notification
             Notification.objects.create(
                 user=self.student,
                 message=f'¡Completaste el quiz "{self.quiz.title}" con {self.score}%! Ganaste {self.xp_earned} XP.',
-                link=f'/tasks/quiz/{self.quiz.pk}/attempt/{self.pk}/'
+                link=f'/tasks/lootbox/quiz/{self.pk}/'
             )
         else:
             self.xp_earned = 0

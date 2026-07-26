@@ -1,9 +1,9 @@
-"""Scheduler APScheduler: tareas en background para notificaciones.
+"""Scheduler APScheduler: tareas en background para notificaciones y rankings.
 
 - check_habit_notifications: cada 1 min, verifica hábitos con hora de inicio/fin
-  dentro de ventana de ±2 min. Crea notificación si no fue enviada hoy.
-- check_task_deadlines: cada 1 min, verifica tareas no personales que vencen hoy
-  (deadline en últimos 2 min). Notifica al creador de la tarea.
+- check_task_deadlines: cada 1 min, verifica tareas que vencen hoy
+- generate_weekly_rankings: cada lunes a medianoche, genera rankings semanales
+- generate_monthly_rankings: día 1 de cada mes a medianoche, genera rankings mensuales
 - start: inicia el scheduler (solo una vez). Se llama desde AppConfig.ready().
 - shutdown: detiene el scheduler limpiamente.
 """
@@ -11,6 +11,7 @@ import atexit
 import logging
 from datetime import time, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from django.db import transaction
 from django.utils import timezone
 
@@ -39,7 +40,6 @@ def check_habit_notifications():
     now_dt = timezone.now()
     today = now_dt.date()
 
-    # Solo hábitos con horarios definidos (no 00:00) de usuarios activos
     habits = Habit.objects.select_related('user').exclude(
         start_time=time(0, 0), end_time=time(0, 0)
     ).filter(user__is_active=True)
@@ -99,17 +99,61 @@ def check_task_deadlines():
             invalidate_unread(task.assigned_by)
 
 
+def generate_weekly_rankings():
+    """Genera rankings semanales para todos los cursos activos."""
+    from apps.courses.models import Course
+    from apps.gamification.models import Ranking
+
+    courses = Course.objects.filter(status=Course.Status.ACTIVE)
+    total = 0
+    for course in courses:
+        count = Ranking.generate_weekly(course)
+        total += count
+    logger.info(f'Rankings semanales generados: {total} estudiantes en {courses.count()} cursos')
+
+
+def generate_monthly_rankings():
+    """Genera rankings mensuales para todos los cursos activos."""
+    from apps.courses.models import Course
+    from apps.gamification.models import Ranking
+
+    courses = Course.objects.filter(status=Course.Status.ACTIVE)
+    total = 0
+    for course in courses:
+        count = Ranking.generate_monthly(course)
+        total += count
+    logger.info(f'Rankings mensuales generados: {total} estudiantes en {courses.count()} cursos')
+
+
 def start():
     global _started
     if _started:
         return
     try:
+        # Jobs existentes
         scheduler.add_job(check_habit_notifications, 'interval', minutes=1, id='habits', replace_existing=True)
         scheduler.add_job(check_task_deadlines, 'interval', minutes=1, id='deadlines', replace_existing=True)
+
+        # Rankings automáticos
+        # Semanal: todos los lunes a las 00:05
+        scheduler.add_job(
+            generate_weekly_rankings,
+            CronTrigger(day_of_week='mon', hour=0, minute=5),
+            id='weekly_rankings',
+            replace_existing=True,
+        )
+        # Mensual: día 1 de cada mes a las 00:10
+        scheduler.add_job(
+            generate_monthly_rankings,
+            CronTrigger(day=1, hour=0, minute=10),
+            id='monthly_rankings',
+            replace_existing=True,
+        )
+
         scheduler.start()
         _started = True
         atexit.register(shutdown)
-        logger.info('APScheduler iniciado')
+        logger.info('APScheduler iniciado con jobs de rankings')
     except Exception as e:
         logger.exception('Error al iniciar el scheduler: %s', e)
 

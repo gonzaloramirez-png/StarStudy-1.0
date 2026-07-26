@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}Recompensa - StarStudy{% endblock %}
+{% block content %}
+<style>
+@keyframes chestGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 213, 79, 0.3)); }
+    50% { filter: drop-shadow(0 0 30px rgba(255, 213, 79, 0.8)); }
+}
+@keyframes chestBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-10px) scale(1.02); }
+    50% { transform: translateY(0) scale(1); }
+    75% { transform: translateY(-5px) scale(1.01); }
+}
+@keyframes chestOpen {
+    0% { transform: scaleY(1) translateY(0); }
+    30% { transform: scaleY(1) translateY(-20px); }
+    60% { transform: scaleY(0.6) translateY(-40px); }
+    100% { transform: scaleY(0.3) translateY(-60px); opacity: 0; }
+}
+@keyframes sparkle {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+@keyframes xpFloat {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-80px) scale(1.5); opacity: 0; }
+}
+@keyframes levelUp {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+@keyframes particles {
+    0% { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-150px) translateX(var(--tx)) scale(0); opacity: 0; }
+}
+.loot-box-container {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+.chest {
+    font-size: 120px;
+    cursor: pointer;
+    transition: all 0.3s;
+    animation: chestGlow 2s ease-in-out infinite;
+    position: relative;
+    z-index: 10;
+}
+.chest:hover {
+    animation: chestBounce 0.6s ease-in-out infinite;
+    transform: scale(1.1);
+}
+.chest.opening {
+    animation: chestOpen 1s forwards;
+}
+.chest-label {
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-top: 1rem;
+    animation: chestBounce 1s ease-in-out infinite;
+}
+.sparkle {
+    position: absolute;
+    font-size: 24px;
+    animation: sparkle 1.5s ease-in-out forwards;
+    pointer-events: none;
+    z-index: 20;
+}
+.xp-reward {
+    position: absolute;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(255, 213, 79, 0.8);
+    animation: xpFloat 2s forwards;
+    z-index: 30;
+    pointer-events: none;
+}
+.level-up-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 3px solid var(--accent);
+    border-radius: 20px;
+    padding: 2rem 3rem;
+    text-align: center;
+    z-index: 100;
+    animation: levelUp 0.5s 2s forwards;
+    box-shadow: 0 0 60px rgba(255, 213, 79, 0.5);
+}
+.level-up-banner h2 {
+    color: var(--accent);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+.level-up-banner .level-num {
+    font-size: 4rem;
+    font-weight: bold;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(255, 213, 79, 0.8);
+}
+.particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: particles 2s forwards;
+    pointer-events: none;
+    z-index: 5;
+}
+.reward-details {
+    opacity: 0;
+    transition: opacity 0.5s 1.5s;
+    text-align: center;
+    margin-top: 2rem;
+}
+.reward-details.show { opacity: 1; }
+.reward-action {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 0.5rem;
+}
+.reward-xp {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(255, 213, 79, 0.5);
+}
+.reward-source {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.5);
+}
+.btn-continue {
+    margin-top: 2rem;
+    opacity: 0;
+    transition: opacity 0.5s 2.5s;
+}
+.btn-continue.show { opacity: 1; }
+</style>
+
+<div class="loot-box-container" id="lootBox">
+    <div class="text-center mb-4">
+        <h4 style="color: var(--accent);"><i class="bi bi-gift me-2"></i>Tu Recompensa</h4>
+        <p class="text-muted">¡Completaste algo increíble!</p>
+    </div>
+
+    <div class="chest" id="chest" onclick="openChest()">
+        &#x1F4E6;
+    </div>
+    <div class="chest-label" id="chestLabel">Toca para abrir</div>
+
+    <div class="reward-details" id="rewardDetails">
+        <div class="reward-action" id="rewardAction">{{ action }}</div>
+        <div class="reward-xp" id="rewardXp">+{{ xp_earned }} XP</div>
+        <div class="reward-source" id="rewardSource">{{ source }}</div>
+    </div>
+
+    {% if leveled_up %}
+    <div class="level-up-banner" id="levelUpBanner">
+        <h2><i class="bi bi-star-fill me-2"></i>¡SUBISTE DE NIVEL!</h2>
+        <div class="level-num">Nivel {{ new_level }}</div>
+        <p class="text-muted mt-2">¡Sigue así!</p>
+    </div>
+    {% endif %}
+
+    <a href="{{ return_url|default:'/' }}" class="btn btn-primary btn-continue" id="btnContinue">
+        <i class="bi bi-arrow-right me-1"></i>Continuar
+    </a>
+</div>
+
+<script>
+let opened = false;
+const colors = ['#ffd54f', '#ff8a65', '#4fc3f7', '#81c784', '#ba68c8', '#fff176'];
+
+function createParticles() {
+    const container = document.getElementById('lootBox');
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = '50%';
+        p.style.top = '40%';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+        p.style.animationDelay = Math.random() * 0.5 + 's';
+        p.style.animationDuration = (1 + Math.random()) + 's';
+        container.appendChild(p);
+        setTimeout(() => p.remove(), 3000);
+    }
+}
+
+function createSparkles() {
+    const chest = document.getElementById('chest');
+    const rect = chest.getBoundingClientRect();
+    const sparkleEmojis = ['✨', '⭐', '💫', '🌟'];
+    for (let i = 0; i < 8; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        s.textContent = sparkleEmojis[Math.floor(Math.random() * sparkleEmojis.length)];
+        s.style.left = (rect.left + rect.width/2 + (Math.random()-0.5)*150) + 'px';
+        s.style.top = (rect.top + rect.height/2 + (Math.random()-0.5)*150) + 'px';
+        s.style.animationDelay = (i * 0.15) + 's';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 2000);
+    }
+}
+
+function createXpFloat() {
+    const xp = document.getElementById('rewardXp').textContent;
+    const el = document.createElement('div');
+    el.className = 'xp-reward';
+    el.textContent = xp;
+    el.style.left = '50%';
+    el.style.top = '35%';
+    el.style.transform = 'translateX(-50%)';
+    document.getElementById('lootBox').appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+}
+
+function openChest() {
+    if (opened) return;
+    opened = true;
+
+    const chest = document.getElementById('chest');
+    const label = document.getElementById('chestLabel');
+
+    label.textContent = '¡Abriendo...!';
+    chest.classList.add('opening');
+
+    createSparkles();
+    createParticles();
+
+    setTimeout(() => {
+        createXpFloat();
+        document.getElementById('rewardDetails').classList.add('show');
+        label.style.display = 'none';
+    }, 1000);
+
+    setTimeout(() => {
+        document.getElementById('btnContinue').classList.add('show');
+    }, 2500);
+}
+</script>
+{% endblock %}

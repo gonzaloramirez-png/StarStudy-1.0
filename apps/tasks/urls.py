@@ -1,4 +1,4 @@
-"""URLs de tasks: lista, personal, crear, detalle, completar, eliminar, comentar, snippets."""
+"""URLs de tasks: lista, personal, crear, detalle, completar, eliminar, comentar, snippets, loot box."""
 from django.urls import path
 from .views.tasks import (
     task_list, task_personal, task_create, task_detail,
@@ -6,6 +6,7 @@ from .views.tasks import (
     task_correct, task_return, task_start_review,
     correction_inbox,
     snippet_list, snippet_create, snippet_edit, snippet_delete, snippet_use,
+    loot_box, loot_box_tip, loot_box_quiz, loot_box_badge,
 )
 from .views.grade_table import grade_table, grade_update, grade_bulk_update
 from .views.export_views import export_course_grades, export_student_report
@@ -25,6 +26,12 @@ urlpatterns = [
     path('<int:pk>/correct/', task_correct, name='task_correct'),
     path('<int:pk>/return/', task_return, name='task_return'),
     path('<int:pk>/start-review/', task_start_review, name='task_start_review'),
+
+    # Loot Box (recompensas)
+    path('lootbox/<int:task_pk>/', loot_box, name='loot_box'),
+    path('lootbox/tip/<int:tip_pk>/', loot_box_tip, name='loot_box_tip'),
+    path('lootbox/quiz/<int:attempt_pk>/', loot_box_quiz, name='loot_box_quiz'),
+    path('lootbox/badge/<int:badge_pk>/', loot_box_badge, name='loot_box_badge'),
 
     # Tabla de notas inline
     path('grade-table/<int:course_pk>/', grade_table, name='grade_table'),

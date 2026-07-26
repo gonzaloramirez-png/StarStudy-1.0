@@ -75,9 +75,14 @@ class Task(models.Model):
         self.status = self.Status.CORRECTED
         self.corrected_at = timezone.now()
         self.corrected_by = user
+        leveled_up = False
+        xp_earned = 0
         if score is not None:
             self.score = score
+            xp_earned = score
+            leveled_up = self.assigned_to.add_xp(xp_earned, source=f'Tarea: {self.title}')
         self.save(update_fields=['status', 'corrected_at', 'corrected_by', 'score', 'updated_at'])
+        return {'xp_earned': xp_earned, 'leveled_up': leveled_up, 'new_level': self.assigned_to.level}
 
     def mark_returned(self, user):
         self.status = self.Status.RETURNED

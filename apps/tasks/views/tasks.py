@@ -133,6 +133,101 @@ def task_complete(request, pk):
 
 
 @login_required
+def loot_box(request, task_pk):
+    """Muestra el Loot Box (cofre) con la recompensa de XP al recibir corrección."""
+    task = get_object_or_404(Task, pk=task_pk)
+
+    # Solo el estudiante asignado puede ver su loot box
+    if task.assigned_to != request.user:
+        messages.error(request, 'No tenés acceso a esta recompensa.')
+        return redirect('home')
+
+    if task.status != Task.Status.CORRECTED or task.score is None:
+        messages.error(request, 'Esta tarea aún no fue corregida.')
+        return redirect('task_detail', pk=task.pk)
+
+    context = {
+        'xp_earned': task.score,
+        'leveled_up': False,
+        'new_level': request.user.level,
+        'action': f'Tarea completada: {task.title}',
+        'source': f'Nota: {task.score}/100',
+        'return_url': f'/tasks/{task.pk}/',
+    }
+    return render(request, 'tasks/loot_box.html', context)
+
+
+@login_required
+def loot_box_tip(request, tip_pk):
+    """Muestra el Loot Box por recibir un Tip (+XP manual del profesor)."""
+    from apps.gamification.models import TipTransaction
+
+    tip = get_object_or_404(TipTransaction, pk=tip_pk)
+
+    if tip.student != request.user:
+        messages.error(request, 'No tenés acceso a esta recompensa.')
+        return redirect('home')
+
+    context = {
+        'xp_earned': tip.xp_amount,
+        'leveled_up': False,
+        'new_level': request.user.level,
+        'action': f'Tip de {tip.teacher.get_full_name() or tip.teacher.email}',
+        'source': tip.get_reason_display(),
+        'return_url': '/home/',
+    }
+    return render(request, 'tasks/loot_box.html', context)
+
+
+@login_required
+def loot_box_quiz(request, attempt_pk):
+    """Muestra el Loot Box por completar un quiz exitosamente."""
+    from apps.gamification.models import QuizAttempt
+
+    attempt = get_object_or_404(QuizAttempt, pk=attempt_pk)
+
+    if attempt.student != request.user:
+        messages.error(request, 'No tenés acceso a esta recompensa.')
+        return redirect('home')
+
+    if not attempt.passed:
+        messages.error(request, 'No aprobaste el quiz.')
+        return redirect('gamification:quiz_results', pk=attempt.quiz.pk)
+
+    context = {
+        'xp_earned': attempt.xp_earned,
+        'leveled_up': False,
+        'new_level': request.user.level,
+        'action': f'Quiz completado: {attempt.quiz.title}',
+        'source': f'Nota: {attempt.score}%',
+        'return_url': f'/gamificacion/quiz/{attempt.quiz.pk}/results/',
+    }
+    return render(request, 'tasks/loot_box.html', context)
+
+
+@login_required
+def loot_box_badge(request, badge_pk):
+    """Muestra el Loot Box por ganar un badge."""
+    from apps.gamification.models import StudentBadge
+
+    sb = get_object_or_404(StudentBadge, pk=badge_pk)
+
+    if sb.student != request.user:
+        messages.error(request, 'No tenés acceso a esta recompensa.')
+        return redirect('home')
+
+    context = {
+        'xp_earned': sb.xp_awarded,
+        'leveled_up': False,
+        'new_level': request.user.level,
+        'action': f'Badge obtenido: {sb.badge.name}',
+        'source': sb.badge.get_category_display(),
+        'return_url': '/home/',
+    }
+    return render(request, 'tasks/loot_box.html', context)
+
+
+@login_required
 def task_delete(request, pk):
     if request.method != 'POST':
         return redirect('task_list')
@@ -176,7 +271,7 @@ def task_correct(request, pk):
     except (ValueError, TypeError):
         return JsonResponse({'success': False, 'error': 'Puntuación inválida (0-100)'}, status=400)
 
-    task.mark_corrected(request.user, score=score)
+    result = task.mark_corrected(request.user, score=score)
 
     if comment:
         add_comment(task, request.user, comment)
@@ -186,6 +281,10 @@ def task_correct(request, pk):
         'status': task.get_status_display(),
         'score': task.score,
         'corrected_at': task.corrected_at.strftime('%d/%m/%Y %H:%M') if task.corrected_at else None,
+        'xp_earned': result['xp_earned'],
+        'leveled_up': result['leveled_up'],
+        'new_level': result['new_level'],
+        'student_name': task.assigned_to.get_full_name() or task.assigned_to.email,
     })
 
 

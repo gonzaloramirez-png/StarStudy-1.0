@@ -208,15 +208,19 @@ def tip_create(request):
         # Añadir XP al estudiante
         tip.student.add_xp(tip.xp_amount, source=f'Tip: {tip.reason}')
 
-        # Notificar
+        # Notificar con link al loot box
         from apps.accounts.models import Notification
         Notification.objects.create(
             user=tip.student,
-            message=f'¡Recibiste un tip de {tip.xp_amount} XP! Razón: {tip.reason}',
-            link=f'/cursos/{tip.course.pk}/'
+            message=f'¡Recibiste un tip de {tip.xp_amount} XP! Razón: {tip.get_reason_display()}',
+            link=f'/tasks/lootbox/tip/{tip.pk}/'
         )
 
-        return JsonResponse({'success': True, 'message': f'¡{tip.xp_amount} XP otorgados a {tip.student.get_full_name()}!'})
+        return JsonResponse({
+            'success': True,
+            'message': f'¡{tip.xp_amount} XP otorgados a {tip.student.get_full_name()}!',
+            'loot_box_url': f'/tasks/lootbox/tip/{tip.pk}/',
+        })
 
     return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
@@ -365,12 +369,12 @@ def badge_award(request, pk):
     # XP extra por badge
     student.add_xp(badge.xp_reward, source=f'Badge: {badge.name}')
 
-    # Notificar
+    # Notificar con link al loot box
     from apps.accounts.models import Notification
     Notification.objects.create(
         user=student,
         message=f'¡Obtuviste el badge "{badge.name}"! +{badge.xp_reward} XP',
-        link=f'/profile/'
+        link=f'/tasks/lootbox/badge/{award.pk}/'
     )
 
     return JsonResponse({
