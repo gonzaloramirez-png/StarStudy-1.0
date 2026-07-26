@@ -16,7 +16,7 @@ from apps.gamification.forms import QuizForm, QuizQuestionForm, TipForm, RewardF
 
 # === QUIZ ===
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def quiz_list(request):
     """Lista de quizzes del profesor."""
     courses = TeacherCourse.objects.filter(teacher=request.user).select_related('course')
@@ -34,7 +34,7 @@ def quiz_list(request):
     return render(request, 'gamification/quiz_list.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def quiz_create(request):
     """Crear nuevo quiz."""
     if request.method == 'POST':
@@ -51,7 +51,7 @@ def quiz_create(request):
     return render(request, 'gamification/quiz_form.html', {'form': form, 'action': 'Crear'})
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def quiz_detail(request, pk):
     """Detalle del quiz con preguntas y estadísticas."""
     quiz = get_object_or_404(Quiz, pk=pk, created_by=request.user)
@@ -73,7 +73,7 @@ def quiz_detail(request, pk):
     return render(request, 'gamification/quiz_detail.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def quiz_edit(request, pk):
     """Editar quiz y sus preguntas."""
     quiz = get_object_or_404(Quiz, pk=pk, created_by=request.user)
@@ -107,7 +107,7 @@ def quiz_edit(request, pk):
     return render(request, 'gamification/quiz_form.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 @require_POST
 def quiz_delete(request, pk):
     quiz = get_object_or_404(Quiz, pk=pk, created_by=request.user)
@@ -186,7 +186,7 @@ def quiz_results(request, pk):
 
 # === TIP SYSTEM ===
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def tip_list(request):
     """Lista de tips (bonus XP manuales) dados."""
     tips = TipTransaction.objects.filter(teacher=request.user).select_related('student', 'course').order_by('-created_at')
@@ -195,7 +195,7 @@ def tip_list(request):
     return render(request, 'gamification/tip_list.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 @require_POST
 def tip_create(request):
     """Dar tip (+XP) a un estudiante."""
@@ -223,7 +223,7 @@ def tip_create(request):
 
 # === REWARDS STORE ===
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def reward_list(request):
     """Tienda de recompensas del curso."""
     course_pk = request.GET.get('course')
@@ -239,7 +239,7 @@ def reward_list(request):
     return render(request, 'gamification/reward_list.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def reward_create(request):
     """Crear recompensa."""
     if request.method == 'POST':
@@ -309,14 +309,14 @@ def reward_redeem(request, pk):
 
 # === BADGES ===
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def badge_list(request):
     """Lista de badges creados."""
     badges = Badge.objects.filter(created_by=request.user).order_by('name')
     return render(request, 'gamification/badge_list.html', {'badges': badges})
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def badge_create(request):
     """Crear badge."""
     if request.method == 'POST':
@@ -333,7 +333,7 @@ def badge_create(request):
     return render(request, 'gamification/badge_form.html', {'form': form, 'action': 'Crear'})
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 @require_POST
 def badge_award(request, pk):
     """Otorgar badge a estudiante."""
@@ -396,7 +396,7 @@ def presentation_mode(request, course_pk):
         course=course, teacher=request.user,
         role__in=[TeacherCourse.Role.TITULAR, TeacherCourse.Role.ASISTENTE]
     ).exists()
-    if not is_teacher and request.user.role not in ['ADMIN', 'SCHOOL_ADMIN']:
+    if not is_teacher and request.user.role != User.Role.PROGRAMMER:
         return render(request, '403.html', status=403)
 
     today = timezone.now().date()
@@ -483,7 +483,7 @@ def presentation_mode(request, course_pk):
 
 # === QUIZ RÁPIDO MULTI-SECCIÓN ===
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def quick_quiz_create(request):
     """Crear quiz rápido + asignar a múltiples secciones en 1 click.
 

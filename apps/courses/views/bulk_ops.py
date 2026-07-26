@@ -11,7 +11,7 @@ from apps.courses.models import Course, CourseCode, TeacherCourse, StudentCourse
 from apps.tasks.models import Task
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def course_clone(request, pk):
     """Clonar curso existente como plantilla para nueva sección."""
     original = get_object_or_404(Course, pk=pk)
@@ -54,7 +54,7 @@ def course_clone(request, pk):
     return render(request, 'courses/course_clone.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 @require_POST
 def bulk_task_assign(request, pk):
     """Asignar una tarea a múltiples estudiantes de un curso."""

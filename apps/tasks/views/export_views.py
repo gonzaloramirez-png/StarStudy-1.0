@@ -10,7 +10,7 @@ from apps.accounts.decorators import role_required
 from apps.tasks.services_export import export_grades_csv, export_grades_pdf, export_student_report_pdf
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def export_course_grades(request, course_pk, fmt='csv'):
     """Exportar todas las notas del curso a CSV o PDF."""
     course = get_object_or_404(Course, pk=course_pk)
@@ -19,7 +19,7 @@ def export_course_grades(request, course_pk, fmt='csv'):
         course=course, teacher=request.user,
         role__in=[TeacherCourse.Role.TITULAR, TeacherCourse.Role.ASISTENTE]
     ).exists()
-    if not is_teacher and request.user.role not in ['ADMIN', 'SCHOOL_ADMIN', 'PROGRAMMER']:
+    if not is_teacher and request.user.role != User.Role.PROGRAMMER:
         return HttpResponse('Sin permisos', status=403)
 
     tasks = Task.objects.filter(
@@ -32,7 +32,7 @@ def export_course_grades(request, course_pk, fmt='csv'):
     return export_grades_csv(course, tasks)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def export_student_report(request, course_pk, student_pk, fmt='pdf'):
     """Exportar reporte individual de estudiante."""
     course = get_object_or_404(Course, pk=course_pk)
@@ -42,7 +42,7 @@ def export_student_report(request, course_pk, student_pk, fmt='pdf'):
         course=course, teacher=request.user,
         role__in=[TeacherCourse.Role.TITULAR, TeacherCourse.Role.ASISTENTE]
     ).exists()
-    if not is_teacher and request.user.role not in ['ADMIN', 'SCHOOL_ADMIN', 'PROGRAMMER']:
+    if not is_teacher and request.user.role != User.Role.PROGRAMMER:
         return HttpResponse('Sin permisos', status=403)
 
     tasks = Task.objects.filter(

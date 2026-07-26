@@ -38,7 +38,7 @@ def generate_code():
 class User(AbstractUser):
     """Usuario del sistema con rol asignado y sistema de vinculación.
 
-    Roles: STUDENT, TEACHER, STAFF, PROGRAMMER, ADMIN, SCHOOL_ADMIN.
+    Roles: STUDENT, TEACHER, STAFF, PROGRAMMER.
     Los profesores generan un código que los estudiantes usan para vincularse.
     El token de GitHub se encripta con Fernet antes de guardarse en DB.
     """
@@ -47,8 +47,6 @@ class User(AbstractUser):
         TEACHER = 'TEACHER', 'Profesor'
         STAFF = 'STAFF', 'Personal'
         PROGRAMMER = 'PROGRAMMER', 'Programador'
-        ADMIN = 'ADMIN', 'Administrador'
-        SCHOOL_ADMIN = 'SCHOOL_ADMIN', 'Administrador Escolar / UTP'
 
     email = models.EmailField()
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT, db_index=True)

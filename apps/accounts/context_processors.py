@@ -12,7 +12,7 @@ from apps.courses.models import Course, StudentCourse
 def user_courses(request):
     """Retorna cursos del usuario y curso seleccionado actual.
 
-    Funciona para usuarios autenticados con rol TEACHER, STAFF, PROGRAMMER, ADMIN, SCHOOL_ADMIN, STUDENT.
+    Funciona para usuarios autenticados con rol TEACHER, STAFF, PROGRAMMER, STUDENT.
     """
     if not request.user.is_authenticated:
         return {'user_courses': [], 'selected_course': None}
@@ -21,7 +21,7 @@ def user_courses(request):
     selected_course_pk = request.GET.get('course') or request.session.get('selected_course')
 
     # Obtener cursos según rol
-    if user.role in [user.Role.TEACHER, user.Role.STAFF, user.Role.PROGRAMMER, user.Role.ADMIN, user.Role.SCHOOL_ADMIN]:
+    if user.role in [user.Role.TEACHER, user.Role.STAFF, user.Role.PROGRAMMER]:
         user_courses = Course.objects.filter(
             teacher_assignments__teacher=user,
             status=Course.Status.ACTIVE

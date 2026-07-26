@@ -511,7 +511,7 @@ student_withdraw = student_remove
 def course_switch(request, pk):
     """Cambiar curso seleccionado en sesión (HTMX endpoint)."""
     # Verificar que el usuario tiene acceso al curso
-    if request.user.role in [User.Role.TEACHER, User.Role.STAFF, User.Role.PROGRAMMER, User.Role.ADMIN, User.Role.SCHOOL_ADMIN]:
+    if request.user.role in [User.Role.TEACHER, User.Role.STAFF, User.Role.PROGRAMMER]:
         has_access = Course.objects.filter(
             teacher_assignments__teacher=request.user,
             pk=pk,

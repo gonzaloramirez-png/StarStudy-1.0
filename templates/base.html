@@ -20,7 +20,7 @@
             {% if user.is_authenticated %}
 
             <!-- Course Switcher Button (for teachers/staff) -->
-            {% if user.role in 'TEACHER STAFF PROGRAMMER ADMIN SCHOOL_ADMIN' or user.role == 'STUDENT' %}
+            {% if user.role in 'TEACHER STAFF PROGRAMMER' or user.role == 'STUDENT' %}
             <button class="btn btn-outline-light btn-sm ms-3 me-auto" data-bs-toggle="modal" data-bs-target="#courseSwitcherModal" aria-label="Cambiar de curso">
                 <i class="bi bi-book me-1"></i>
                 <span class="d-none d-sm-inline">{% if selected_course %}{{ selected_course.name }}{% else %}Mis Cursos{% endif %}</span>

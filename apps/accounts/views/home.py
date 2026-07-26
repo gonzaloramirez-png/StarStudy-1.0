@@ -20,7 +20,7 @@ def home(request):
     is_student = user.role == User.Role.STUDENT
 
     # Cursos del usuario para el selector en navbar
-    if user.role in [User.Role.TEACHER, User.Role.STAFF, User.Role.PROGRAMMER, User.Role.ADMIN, User.Role.SCHOOL_ADMIN]:
+    if user.role in [User.Role.TEACHER, User.Role.STAFF, User.Role.PROGRAMMER]:
         user_courses = Course.objects.filter(
             teacher_assignments__teacher=user,
             status=Course.Status.ACTIVE

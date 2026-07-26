@@ -18,7 +18,7 @@ from apps.accounts.decorators import role_required
 from apps.tasks.services import add_comment
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def grade_table(request, course_pk):
     """Tabla de notas estilo Excel para un curso.
 
@@ -37,7 +37,7 @@ def grade_table(request, course_pk):
         course=course, teacher=request.user,
         role__in=[TeacherCourse.Role.TITULAR, TeacherCourse.Role.ASISTENTE]
     ).exists()
-    if not is_teacher and request.user.role not in ['ADMIN', 'SCHOOL_ADMIN', 'PROGRAMMER']:
+    if not is_teacher and request.user.role != User.Role.PROGRAMMER:
         return render(request, '403.html', status=403)
 
     # Filtros
@@ -100,7 +100,7 @@ def grade_table(request, course_pk):
     return render(request, 'tasks/grade_table.html', context)
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 @require_POST
 def grade_update(request, task_pk):
     """Endpoint HTMX para actualizar calificación de una tarea inline.
@@ -115,7 +115,7 @@ def grade_update(request, task_pk):
         course=task.course, teacher=request.user,
         role__in=[TeacherCourse.Role.TITULAR, TeacherCourse.Role.ASISTENTE]
     ).exists()
-    if not is_teacher and request.user.role not in ['ADMIN', 'SCHOOL_ADMIN', 'PROGRAMMER']:
+    if not is_teacher and request.user.role != User.Role.PROGRAMMER:
         return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
 
     score = request.POST.get('score')
@@ -161,7 +161,7 @@ def grade_update(request, task_pk):
     })
 
 
-@role_required('TEACHER', 'STAFF', 'PROGRAMMER', 'ADMIN', 'SCHOOL_ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 @require_POST
 def grade_bulk_update(request, course_pk):
     """Actualizar múltiples tareas a la vez (batch save)."""
@@ -171,7 +171,7 @@ def grade_bulk_update(request, course_pk):
         course=course, teacher=request.user,
         role__in=[TeacherCourse.Role.TITULAR, TeacherCourse.Role.ASISTENTE]
     ).exists()
-    if not is_teacher and request.user.role not in ['ADMIN', 'SCHOOL_ADMIN', 'PROGRAMMER']:
+    if not is_teacher and request.user.role != User.Role.PROGRAMMER:
         return JsonResponse({'success': False, 'error': 'Sin permisos'}, status=403)
 
     updates = request.POST.get('updates')

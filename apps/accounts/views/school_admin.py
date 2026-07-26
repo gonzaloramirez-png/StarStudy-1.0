@@ -1,4 +1,4 @@
-"""Vista del Dashboard de Administrador Escolar (SCHOOL_ADMIN).
+"""Vista del Dashboard de Administrador Escolar (TEACHER).
 
 Métricas globales del establecimiento, gestión de licencias, asignación de profesores.
 """
@@ -14,7 +14,7 @@ from apps.courses.models import Course, TeacherCourse, StudentCourse
 from apps.accounts.decorators import role_required
 
 
-@role_required('SCHOOL_ADMIN', 'ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def school_dashboard(request):
     """Dashboard principal del administrador escolar."""
     today = timezone.now().date()
@@ -97,7 +97,7 @@ def school_dashboard(request):
     return render(request, 'accounts/school_dashboard.html', context)
 
 
-@role_required('SCHOOL_ADMIN', 'ADMIN')
+@role_required('TEACHER', 'STAFF', 'PROGRAMMER')
 def manage_teachers(request):
     """Gestión de profesores: asignar a cursos/materias."""
     teachers = User.objects.filter(
