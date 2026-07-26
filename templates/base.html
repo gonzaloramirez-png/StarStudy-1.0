@@ -32,11 +32,6 @@
                 <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
                     <i class="bi bi-house-door me-1"></i>Inicio
                 </a>
-                {% if user.role != 'PROGRAMMER' %}
-                <a class="nav-link {% if request.resolver_match.url_name == 'my_day' %}active{% endif %}" href="{% url 'my_day' %}">
-                    <i class="bi bi-calendar-day me-1"></i>Mi Día
-                </a>
-                {% endif %}
 
                 {% if user.role == 'TEACHER' %}
                     <a class="nav-link {% if 'schedule' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'schedule_personal' %}">
