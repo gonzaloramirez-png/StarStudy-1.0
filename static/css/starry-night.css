@@ -526,7 +526,7 @@ h1, h2, h3, h4, h5 {
 .site-footer {
     background: rgba(5, 8, 22, 0.85);
     border-top: 1px solid rgba(255, 213, 79, 0.1);
-    margin-top: 0px;
+    margin-top: 10px;
 }
 
 /* Welcome banner */
