@@ -1,0 +1,11 @@
+*.docx linguist-vendored
+*.bat linguist-vendored
+*.sh linguist-vendored
+*.yml linguist-generated
+*.toml linguist-generated
+*.conf linguist-vendored
+*.example linguist-generated
+*.txt linguist-generated
+*.jpg linguist-vendored
+*.md linguist-documentation
+*.gitkeep linguist-generated
