@@ -409,9 +409,6 @@ StarStudy-1.0/
 ├── tests/                           # Tests del proyecto
 │   └── conftest.py                 # Fixtures pytest
 │
-├── scripts/
-│   └── notion_sync.py              # Sincronización con Notion
-│
 ├── docs/                            # Documentación
 │   ├── architecture.md
 │   ├── api.md
