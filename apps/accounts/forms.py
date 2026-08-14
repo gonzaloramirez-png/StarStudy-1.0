@@ -1,13 +1,19 @@
-"""Formularios de accounts: registro y login.
+"""Formularios de accounts: registro, login, perfil y preferencias.
 
 - RegisterForm: registro con email, rol, nombre, código de vinculación (opcional para estudiantes).
 - CustomLoginForm: login con email + rol + contraseña. Valida que coincidan email, rol y password.
+- ProfileEditForm: edición de nombre y apellido.
+- AvatarForm: subida de foto de perfil con validación de tipo y tamaño.
+- EmailChangeForm: solicitud de cambio de correo con contraseña.
+- DeleteAccountForm: confirmación de baja de cuenta con contraseña.
+- NotificationPreferencesForm: preferencias de notificación por canal.
+- CustomPasswordChangeForm: cambio de contraseña con estilos de Bootstrap.
 """
 from django import forms
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from django.db import transaction
-from .models import User
+from .models import User, NotificationPreferences
 
 
 class RegisterForm(UserCreationForm):
@@ -110,3 +116,118 @@ class CustomLoginForm(AuthenticationForm):
                 self.confirm_login_allowed(self.user_cache)
 
         return self.cleaned_data
+
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido'}),
+        }
+
+
+class AvatarForm(forms.ModelForm):
+    avatar = forms.ImageField(
+        required=True,
+        label='Foto de perfil',
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+    )
+
+    class Meta:
+        model = User
+        fields = ['avatar']
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if not avatar:
+            return avatar
+        if avatar.content_type not in ('image/jpeg', 'image/png', 'image/webp', 'image/gif'):
+            raise forms.ValidationError('El archivo debe ser una imagen (JPG, PNG, WEBP o GIF).')
+        if avatar.size > 2 * 1024 * 1024:
+            raise forms.ValidationError('La imagen no puede superar los 2 MB.')
+        return avatar
+
+
+class EmailChangeForm(forms.Form):
+    email = forms.EmailField(
+        required=True,
+        label='Nuevo correo electrónico',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'nuevo@correo.com'}),
+    )
+    password = forms.CharField(
+        required=True,
+        label='Tu contraseña actual',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'current-password'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if self.user and not self.user.check_password(password):
+            raise forms.ValidationError('La contraseña no es correcta.')
+        return password
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if self.user and email == self.user.email.lower():
+            raise forms.ValidationError('El nuevo correo debe ser distinto al actual.')
+        if User.objects.filter(email=email, role=self.user.role).exists():
+            raise forms.ValidationError('Ya existe una cuenta con ese correo para tu rol.')
+        return email
+
+
+class DeleteAccountForm(forms.Form):
+    password = forms.CharField(
+        required=True,
+        label='Tu contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'current-password'}),
+    )
+    confirm = forms.BooleanField(
+        required=True,
+        label='Entiendo que esta acción es irreversible.',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if self.user and not self.user.check_password(password):
+            raise forms.ValidationError('La contraseña no es correcta.')
+        return password
+
+
+class NotificationPreferencesForm(forms.ModelForm):
+    email_deadlines = forms.BooleanField(
+        required=False,
+        label='Recordatorios de vencimiento por email',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
+    in_app = forms.BooleanField(
+        required=False,
+        label='Notificaciones in-app (vencimientos y hábitos)',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
+    push = forms.BooleanField(
+        required=False,
+        label='Alertas push del navegador',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+    )
+
+    class Meta:
+        model = NotificationPreferences
+        fields = ['email_deadlines', 'in_app', 'push']
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'

@@ -1,0 +1,328 @@
+/* ===================================
+   Product Tour - StarStudy
+   Estilos para Shepherd.js
+   =================================== */
+
+/* Tema StarStudy para Shepherd */
+.shepherd-theme-starstudy {
+  --shepherd-bg: #0a0f1e;
+  --shepherd-accent: #7c3aed;
+  --shepherd-accent-light: #a855f7;
+  --shepherd-text: #f1f5f9;
+  --shepherd-muted: #94a3b8;
+  --shepherd-border: rgba(124, 58, 237, 0.3);
+  --shepherd-glow: rgba(124, 58, 237, 0.15);
+}
+
+/* Popover principal */
+.shepherd-theme-starstudy .shepherd-element {
+  background: linear-gradient(145deg, var(--shepherd-bg) 0%, #111827 100%);
+  border: 1px solid var(--shepherd-border);
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5),
+              0 0 40px var(--shepherd-glow),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  max-width: 400px;
+  overflow: hidden;
+}
+
+/* Cabecera del paso */
+.shepherd-theme-starstudy .shepherd-header {
+  background: linear-gradient(135deg, var(--shepherd-accent) 0%, #6d28d9 100%);
+  padding: 16px 20px 12px;
+  border-radius: 16px 16px 0 0;
+  position: relative;
+}
+
+.shepherd-theme-starstudy .shepherd-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+}
+
+/* Título del paso */
+.shepherd-theme-starstudy .shepherd-title {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  padding-right: 24px;
+  letter-spacing: -0.01em;
+}
+
+/* Icono del paso (número) */
+.shepherd-theme-starstudy .shepherd-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+/* Contenido del paso */
+.shepherd-theme-starstudy .shepherd-text {
+  color: var(--shepherd-text);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  padding: 16px 20px;
+  margin: 0;
+}
+
+.shepherd-theme-starstudy .shepherd-text code {
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--shepherd-accent-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Botones */
+.shepherd-theme-starstudy .shepherd-footer {
+  padding: 12px 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shepherd-theme-starstudy .shepherd-button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+/* Botón principal (Siguiente / Finalizar) */
+.shepherd-theme-starstudy .shepherd-button.shepherd-button-primary {
+  background: linear-gradient(135deg, var(--shepherd-accent) 0%, var(--shepherd-accent-light) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.shepherd-theme-starstudy .shepherd-button.shepherd-button-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}
+
+/* Botón secundario (Anterior) */
+.shepherd-theme-starstudy .shepherd-button.shepherd-button-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--shepherd-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shepherd-theme-starstudy .shepherd-button.shepherd-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--shepherd-text);
+}
+
+/* Botón cancelar */
+.shepherd-theme-starstudy .shepherd-cancel-icon {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+
+.shepherd-theme-starstudy .shepherd-cancel-icon:hover {
+  color: #ef4444;
+}
+
+/* Barra de progreso */
+.shepherd-theme-starstudy .shepherd-progress {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px 12px;
+}
+
+.shepherd-theme-starstudy .shepherd-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.shepherd-theme-starstudy .shepherd-progress-dot.active {
+  background: var(--shepherd-accent);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
+  transform: scale(1.2);
+}
+
+.shepherd-theme-starstudy .shepherd-progress-dot.completed {
+  background: var(--shepherd-accent-light);
+}
+
+/* Highlight del elemento activo */
+.shepherd-theme-starstudy .shepherd-element.shepherd-element-active {
+  z-index: 9999;
+}
+
+/* Flecha del popover */
+.shepherd-theme-starstudy .shepherd-arrow {
+  fill: var(--shepherd-bg);
+}
+
+/* Overlay oscuro */
+.shepherd-theme-starstudy .shepherd-modal-overlay-container {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* ===================================
+   Bienvenida del Tour
+   =================================== */
+
+.tour-welcome {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.tour-welcome-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  display: block;
+  animation: tour-bounce 1s ease infinite;
+}
+
+@keyframes tour-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.tour-welcome-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.tour-welcome-subtitle {
+  font-size: 0.9rem;
+  color: var(--shepherd-muted);
+  line-height: 1.5;
+}
+
+/* ===================================
+   Badges de pasos
+   =================================== */
+
+.tour-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.tour-badge-student {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.tour-badge-teacher {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.tour-badge-staff {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.tour-badge-programmer {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+/* ===================================
+   Botón Replay Tour
+   =================================== */
+
+.btn-replay-tour {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(168, 85, 247, 0.15));
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  color: #a855f7;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-replay-tour:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(168, 85, 247, 0.25));
+  border-color: rgba(124, 58, 237, 0.5);
+  color: #c084fc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.btn-replay-tour i {
+  font-size: 1rem;
+}
+
+/* ===================================
+   Responsive
+   =================================== */
+
+@media (max-width: 576px) {
+  .shepherd-theme-starstudy .shepherd-element {
+    max-width: calc(100vw - 32px);
+    margin: 16px;
+  }
+  
+  .shepherd-theme-starstudy .shepherd-text {
+    font-size: 0.9rem;
+    padding: 12px 16px;
+  }
+  
+  .shepherd-theme-starstudy .shepherd-footer {
+    padding: 10px 16px 14px;
+  }
+  
+  .shepherd-theme-starstudy .shepherd-button {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ===================================
+   Animaciones de entrada
+   =================================== */
+
+@keyframes shepherd-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shepherd-theme-starstudy .shepherd-element {
+  animation: shepherd-fade-in 0.3s ease;
+}

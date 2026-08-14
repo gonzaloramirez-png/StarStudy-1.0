@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Health Check - StarStudy{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-heart-pulse me-2"></i>Health Check</h2>
+    
+    {% if health_check_results %}
+    <div class="row">
+        {% for check in health_check_results %}
+        <div class="col-md-6 mb-3">
+            <div class="card {% if check.status == 'healthy' %}border-success{% elif check.status == 'unhealthy' %}border-danger{% else %}border-warning{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center {% if check.status == 'healthy' %}bg-success text-white{% elif check.status == 'unhealthy' %}bg-danger text-white{% else %}bg-warning{% endif %}">
+                    <h5 class="mb-0">{{ check.name }}</h5>
+                    <span class="badge {% if check.status == 'healthy' %}bg-light text-success{% elif check.status == 'unhealthy' %}bg-light text-danger{% else %}bg-light text-warning{% endif %}">
+                        {{ check.status|upper }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1"><strong>Descripción:</strong> {{ check.description }}</p>
+                    {% if check.critical_service %}
+                    <p class="mb-1"><span class="badge bg-danger">Servicio crítico</span></p>
+                    {% endif %}
+                    {% if check.error %}
+                    <div class="alert alert-danger mb-0 py-1 px-2 small">
+                        <strong>Error:</strong> {{ check.error }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No hay checks configurados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

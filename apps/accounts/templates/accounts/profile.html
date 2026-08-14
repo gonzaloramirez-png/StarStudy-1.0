@@ -9,6 +9,15 @@
             <div class="card-header">Perfil</div>
             <div class="card-body">
 
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="{{ user.get_avatar_url }}" alt="Foto de perfil de {{ user.get_full_name|default:user.email }}"
+                         class="rounded-circle border" style="width: 80px; height: 80px; object-fit: cover;">
+                    <div>
+                        <p class="mb-0"><strong>{{ user.get_full_name|default:user.email }}</strong></p>
+                        <p class="text-muted mb-0">{{ user.get_role_display }}</p>
+                    </div>
+                </div>
+
                 <p><strong>Nombre:</strong> {{ user.get_full_name|default:user.email }}</p>
                 <p><strong>Rol:</strong> {{ user.get_role_display }}</p>
                 <p><strong>Correo:</strong> {{ user.email }}</p>
@@ -22,7 +31,7 @@
                 <p><strong>Asignadas por mí:</strong> {{ assigned }}</p>
                 {% endif %}
 
-                {% if user.role == 'TEACHER' %}
+                {% if user.role == 'TEACHER' or user.role == 'PROGRAMMER' %}
 
                 <hr>
 
@@ -78,9 +87,12 @@
                         @{{ user.github_username }}
                     </a>
                 </p>
-                <a href="{% url 'github_disconnect' %}" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-link-45deg me-1"></i>Desconectar
-                </a>
+                <form method="post" action="{% url 'github_disconnect' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-link-45deg me-1"></i>Desconectar
+                    </button>
+                </form>
                 {% else %}
                 <form method="post" action="{% url 'github_connect' %}" class="row g-2 align-items-end">
                     {% csrf_token %}
@@ -92,6 +104,10 @@
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-github me-1"></i>Conectar
                         </button>
+                    </div>
+                    <div class="col-12">
+                        <input type="password" name="github_token" class="form-control"
+                               placeholder="Token de acceso de GitHub (opcional)">
                     </div>
                 </form>
                 {% endif %}
@@ -116,6 +132,169 @@
                 </form>
 
                 {% endif %}
+
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-award me-2" aria-hidden="true"></i>Logros</div>
+            <div class="card-body">
+                <p>
+                    <strong>Nivel:</strong>
+                    <span class="badge bg-primary">{{ user.level }}</span>
+                    <span class="text-muted">{{ user.xp }} XP</span>
+                </p>
+                <p>
+                    <strong>Racha de Misión Principal:</strong>
+                    <span class="badge bg-danger"><i class="bi bi-fire me-1"></i>{{ streak }} día{{ streak|pluralize }}</span>
+                </p>
+                <p><strong>Badges desbloqueados:</strong> {{ badges|length }}</p>
+                <div class="row row-cols-2 row-cols-md-3 g-2">
+                    {% for badge in badges %}
+                    <div class="col">
+                        <div class="border rounded p-2 text-center h-100"
+                             style="background: rgba(255, 213, 79, 0.08); border-color: rgba(255, 213, 79, 0.3) !important;">
+                            <div style="font-size: 1.6rem; color: var(--accent);"><i class="bi bi-trophy" aria-hidden="true"></i></div>
+                            <small class="d-block"><strong>{% if badge.title %}{{ badge.title }}{% else %}{{ badge }}{% endif %}</strong></small>
+                            {% if badge.description %}<small class="text-muted d-block">{{ badge.description }}</small>{% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-muted">Todavía no desbloqueaste logros. Completá tareas y hábitos para ganarlos.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-gear me-2" aria-hidden="true"></i>Configuración</div>
+            <div class="card-body">
+
+                <h6><i class="bi bi-image me-2" aria-hidden="true"></i>Foto de perfil</h6>
+                <form method="post" action="{% url 'avatar_upload' %}" enctype="multipart/form-data" class="mb-4">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <img src="{{ user.get_avatar_url }}" alt="Vista previa de tu foto de perfil"
+                             class="rounded-circle border" style="width: 56px; height: 56px; object-fit: cover;">
+                        <div class="flex-grow-1">
+                            <input type="file" name="avatar" class="form-control form-control-sm" accept="image/*" required>
+                            <small class="text-muted">JPG, PNG, WEBP o GIF. Máx. 2 MB.</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Subir foto</button>
+                </form>
+
+                <hr>
+
+                <h6><i class="bi bi-person me-2" aria-hidden="true"></i>Datos personales</h6>
+                <form method="post" action="{% url 'profile_edit' %}" class="row g-2 mb-4">
+                    {% csrf_token %}
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ profile_form.first_name.id_for_label }}">Nombre</label>
+                        {{ profile_form.first_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ profile_form.last_name.id_for_label }}">Apellido</label>
+                        {{ profile_form.last_name }}
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm">Guardar datos</button>
+                    </div>
+                </form>
+
+                <hr>
+
+                <h6><i class="bi bi-bell me-2" aria-hidden="true"></i>Preferencias de notificaciones</h6>
+                <form method="post" action="{% url 'notification_preferences' %}" class="mb-4">
+                    {% csrf_token %}
+                    <div class="form-check mb-2">
+                        {{ prefs_form.email_deadlines }}
+                        <label class="form-check-label" for="{{ prefs_form.email_deadlines.id_for_label }}">
+                            {{ prefs_form.email_deadlines.label }}
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        {{ prefs_form.in_app }}
+                        <label class="form-check-label" for="{{ prefs_form.in_app.id_for_label }}">
+                            {{ prefs_form.in_app.label }}
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        {{ prefs_form.push }}
+                        <label class="form-check-label" for="{{ prefs_form.push.id_for_label }}">
+                            {{ prefs_form.push.label }}
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Guardar preferencias</button>
+                </form>
+
+                <hr>
+
+                <h6><i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Seguridad</h6>
+                <a href="{% url 'password_change' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-key me-1" aria-hidden="true"></i>Cambiar contraseña
+                </a>
+
+                <hr>
+
+                <h6><i class="bi bi-envelope me-2" aria-hidden="true"></i>Correo electrónico</h6>
+                <p class="mb-1"><strong>Correo actual:</strong> {{ user.email }}</p>
+                {% if user.pending_email %}
+                <div class="alert alert-warning py-2" role="alert">
+                    Cambio pendiente para <strong>{{ user.pending_email }}</strong>. Revisá tu bandeja de entrada.
+                </div>
+                {% else %}
+                <form method="post" action="{% url 'email_change' %}" class="row g-2 mb-2">
+                    {% csrf_token %}
+                    <div class="col-md-6">
+                        <input type="email" name="email" class="form-control" placeholder="nuevo@correo.com" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="password" name="password" class="form-control" placeholder="Tu contraseña actual"
+                               autocomplete="current-password" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm">Solicitar cambio de correo</button>
+                        <small class="text-muted d-block mt-1">Te enviaremos un enlace de confirmación al nuevo correo.</small>
+                    </div>
+                </form>
+                {% endif %}
+
+                <hr>
+
+                <h6><i class="bi bi-download me-2" aria-hidden="true"></i>Datos personales</h6>
+                <p class="mb-2">
+                    <a href="{% url 'export_data' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-box-arrow-down me-1" aria-hidden="true"></i>Descargar mis datos (JSON)
+                    </a>
+                </p>
+
+                <hr>
+
+                <h6 class="text-danger"><i class="bi bi-trash me-2" aria-hidden="true"></i>Zona de peligro</h6>
+                <form method="post" action="{% url 'delete_account' %}"
+                      onsubmit="return confirm('¿Seguro que querés eliminar tu cuenta? Esta acción es irreversible.');">
+                    {% csrf_token %}
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <input type="password" name="password" class="form-control"
+                                   placeholder="Tu contraseña actual" autocomplete="current-password" required>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="form-check mb-1">
+                                <input type="checkbox" name="confirm" id="delete-account-confirm" class="form-check-input" required>
+                                <label class="form-check-label" for="delete-account-confirm">
+                                    Entiendo que esta acción es irreversible.
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar mi cuenta
+                            </button>
+                        </div>
+                    </div>
+                </form>
 
             </div>
         </div>

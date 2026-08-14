@@ -1,0 +1,148 @@
+/* ========================================
+   StarStudy - Componentes HTMX/Alpine
+   ======================================== */
+
+/* Transiciones suaves para HTMX */
+.htmx-settling {
+    opacity: 0.5;
+    transition: opacity 150ms ease-out;
+}
+
+.htmx-added {
+    animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast container Alpine */
+[x-data="toastStore()"] .toast {
+    min-width: 280px;
+    max-width: 420px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode variables (complementa starry-night.css) */
+[data-theme="dark"] {
+    --bs-body-bg: #0b0f1a;
+    --bs-body-color: #e4e8f0;
+    --bs-card-bg: #111724;
+    --bs-card-border-color: #2a3042;
+    --bs-border-color: #2a3042;
+    --bs-primary: #7c5cff;
+    --bs-primary-rgb: 124, 92, 255;
+    --bs-secondary: #6c757d;
+    --bs-success: #28c76f;
+    --bs-danger: #ea5455;
+    --bs-warning: #ff9f0a;
+    --bs-info: #1f9bcf;
+}
+
+/* Scrollbar dark mode */
+[data-theme="dark"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #0b0f1a;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #2a3042;
+    border-radius: 4px;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #3a4052;
+}
+
+/* Focus visible para accesibilidad */
+*:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* Skip link */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 1rem;
+    background: var(--bs-primary);
+    color: white;
+    z-index: 10000;
+    border-radius: 0.25rem;
+}
+.skip-link:focus {
+    top: 1rem;
+}
+
+/* Botón toggle tema */
+.theme-toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+}
+.theme-toggle:hover {
+    background-color: rgba(125, 125, 125, 0.15);
+}
+[data-theme="dark"] .theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tabla responsive mejorada */
+.table-responsive > .table {
+    min-width: 600px;
+}
+
+/* Badge importance */
+.badge-importance-high { background-color: var(--bs-danger) !important; }
+.badge-importance-medium { background-color: var(--bs-warning) !important; color: #000 !important; }
+.badge-importance-low { background-color: var(--bs-info) !important; }
+
+/* Estado vacío */
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--bs-secondary-color);
+}
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Cargando HTMX */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
+
+/* Modal backdrop suave */
+.modal-backdrop.show {
+    opacity: 0.7;
+}
+
+/* Formularios compactos */
+.form-control-sm, .form-select-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Navbar mobile dropdown */
+@media (max-width: 991.98px) {
+    .dropdown-menu-end {
+        right: 0;
+        left: auto;
+    }
+}

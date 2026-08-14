@@ -22,6 +22,31 @@
                             <input type="time" name="end_time" id="id_end_time" class="form-control" required>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Colorimetría del hábito</label>
+                        <div class="d-flex flex-column gap-2">
+                            <label class="border border-primary rounded p-2 ps-3 d-flex align-items-center gap-2" style="border-width: 2px !important;">
+                                <input type="radio" name="category" value="FOCUS" class="form-check-input mt-0" required>
+                                <span class="badge text-bg-primary">Azul</span>
+                                <span class="small">Enfoque y Hábitos Clave <em class="text-muted d-block">No negociables: leer, meditar, proyecto principal</em></span>
+                            </label>
+                            <label class="border border-warning rounded p-2 ps-3 d-flex align-items-center gap-2" style="border-width: 2px !important;">
+                                <input type="radio" name="category" value="ESSENTIAL" class="form-check-input mt-0" checked>
+                                <span class="badge text-bg-warning text-dark">Amarillo</span>
+                                <span class="small">Esenciales / Rutina Diaria <em class="text-muted d-block">Mantenimiento y disciplina: ejercicio, limpiar, correos</em></span>
+                            </label>
+                            <label class="border border-danger rounded p-2 ps-3 d-flex align-items-center gap-2" style="border-width: 2px !important;">
+                                <input type="radio" name="category" value="URGENT" class="form-check-input mt-0">
+                                <span class="badge text-bg-danger">Rojo</span>
+                                <span class="small">Urgencias / Alto Impacto <em class="text-muted d-block">Fechas límite estrictas o malos hábitos a eliminar</em></span>
+                            </label>
+                            <label class="border border-success rounded p-2 ps-3 d-flex align-items-center gap-2" style="border-width: 2px !important;">
+                                <input type="radio" name="category" value="WELLNESS" class="form-check-input mt-0">
+                                <span class="badge text-bg-success">Verde</span>
+                                <span class="small">Bienestar / Secundarios <em class="text-muted d-block">Autocuidado, descanso, pausas activas, socializar</em></span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Crear</button>
                         <a href="{% url 'habito_list' %}" class="btn btn-outline-light">Cancelar</a>

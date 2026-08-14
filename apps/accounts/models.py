@@ -55,6 +55,8 @@ class User(AbstractUser):
     linked_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='linked_students')
     github_username = models.CharField(max_length=100, blank=True, null=True)
     github_token = models.TextField(blank=True, null=True)
+    pending_email = models.EmailField(blank=True, null=True,
+                                      help_text='Email nuevo esperando confirmación de cambio.')
 
     # Gamificación
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
@@ -234,3 +236,19 @@ class UserActivity(models.Model):
             prev_date = day
 
         return best
+
+
+class NotificationPreferences(models.Model):
+    """Preferencias de notificación por usuario y por canal.
+
+    Campos (todos con opt-in por defecto): email de vencimientos,
+    notificaciones in-app y alertas push del navegador.
+    """
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='notification_preferences')
+    email_deadlines = models.BooleanField(default=True, help_text='Recordatorios de vencimiento de tareas por email.')
+    in_app = models.BooleanField(default=True, help_text='Notificaciones in-app de vencimientos y hábitos.')
+    push = models.BooleanField(default=True, help_text='Alertas push del navegador.')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Preferencias de {self.user.email}'

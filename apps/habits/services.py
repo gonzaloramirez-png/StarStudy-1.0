@@ -23,12 +23,13 @@ def toggle_habit(habit):
     return True, habit
 
 
-def create_habit(user, title, start_time, end_time):
+def create_habit(user, title, start_time, end_time, category):
     return Habit.objects.create(
         user=user,
         title=title,
         start_time=start_time,
         end_time=end_time,
+        category=category,
     )
 
 

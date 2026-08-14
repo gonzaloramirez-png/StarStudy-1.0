@@ -1,0 +1,13 @@
+Hola {{ task.assigned_to.get_full_name|default:task.assigned_to.email }}!
+
+Tu tarea "{{ task.title }}" vence el {{ task.deadline|date:"d/m/Y H:i" }}.
+
+Prioridad: {{ task.get_importance_display }}
+
+Hacé clic en el siguiente enlace para verla:
+
+{{ site_url }}{% url 'task_detail' task.pk %}
+
+Si ya la completaste, ignorá este correo.
+
+— El equipo de StarStudy

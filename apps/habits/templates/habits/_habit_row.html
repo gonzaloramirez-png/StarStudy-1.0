@@ -1,0 +1,36 @@
+<div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2" id="habit-{{ habit.pk }}">
+    <div style="min-width: 0;">
+        <strong>{{ habit.title }}</strong>
+        <div class="mt-1 d-flex flex-wrap align-items-center gap-1">
+            <span class="badge text-bg-primary">Nv. {{ habit.level }}</span>
+            <small class="text-muted">{{ habit.start_time|time:'H:i' }} - {{ habit.end_time|time:'H:i' }}</small>
+            <small class="text-muted">{{ habit.total_completions }} completado{{ habit.total_completions|pluralize:'s' }}</small>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+        <form method="post" action="{% url 'habito_toggle' habit.pk %}"
+              hx-post="{% url 'habito_toggle' habit.pk %}"
+              hx-target="#habit-{{ habit.pk }}"
+              hx-swap="outerHTML"
+              hx-disabled-elt="find button">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm {% if habit.completed_today %}btn-success{% else %}btn-outline-light{% endif %}">
+                {% if habit.completed_today %}
+                <i class="bi bi-check-circle-fill me-1"></i>Hecho
+                {% else %}
+                <i class="bi bi-check-circle me-1"></i>Completar
+                {% endif %}
+            </button>
+        </form>
+        <form method="post" action="{% url 'habito_delete' habit.pk %}"
+              hx-post="{% url 'habito_delete' habit.pk %}"
+              hx-target="#habit-{{ habit.pk }}"
+              hx-swap="outerHTML"
+              hx-confirm="¿Eliminar este hábito?">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash"></i>
+            </button>
+        </form>
+    </div>
+</div>

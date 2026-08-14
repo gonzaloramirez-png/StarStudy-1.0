@@ -1,0 +1,15 @@
+{% load i18n %}{% autoescape off %}
+{% blocktranslate %}Hola {{ user.get_full_name|default:user.email }}!{% endblocktranslate %}
+
+{% blocktranslate %}Recibiste este correo porque pediste cambiar el correo de tu cuenta de StarStudy a:{% endblocktranslate %}
+
+{{ new_email }}
+
+{% blocktranslate %}Hacé clic en el siguiente enlace para confirmar el cambio:{% endblocktranslate %}
+
+{{ link }}
+
+{% blocktranslate %}El enlace es válido por 24 horas. Si no pediste este cambio, podés ignorar este correo.{% endblocktranslate %}
+
+— El equipo de StarStudy
+{% endautoescape %}

@@ -1,0 +1,9 @@
+<div class="toast show align-items-center text-bg-{{ type }} border-0" role="alert" aria-live="polite">
+    <div class="d-flex">
+        <div class="toast-body">
+            {{ icon|safe }}
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" @click="$parent.remove($parent.toasts.indexOf($parent.toasts.find(t => t.message === '{{ message|escapejs }}')))" aria-label="Cerrar"></button>
+    </div>
+</div>

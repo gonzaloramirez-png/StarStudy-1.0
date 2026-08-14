@@ -1,21 +1,26 @@
-"""Vistas de autenticación: registro, login y logout.
+"""Vistas de autenticación: registro, login, logout, cambio de contraseña y tutorial.
 
 - register: formulario de registro con rol y código de vinculación opcional.
 - join: redirige al registro prellenando el código desde URL pública /join/<code>/.
 - logout_view: cierra sesión (requiere login).
+- CustomPasswordChangeView: cambio de contraseña con formulario personalizado.
+- dismiss_tutorial: descarta el onboarding del tutorial (POST-only, CSRF).
 """
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import PasswordChangeView
 from django.contrib import messages
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.db import IntegrityError
 from apps.accounts.models import User
-from apps.accounts.forms import RegisterForm
+from apps.accounts.forms import RegisterForm, CustomPasswordChangeForm
 
 
 @login_required
 def logout_view(request):
+    if request.method != 'POST':
+        return redirect('home')
     auth_logout(request)
     return redirect('login')
 
@@ -50,3 +55,22 @@ def join(request, code):
         messages.error(request, 'Código inválido o expirado')
         return redirect('register')
     return redirect(reverse('register') + '?code=' + code_upper)
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'registration/password_change_form.html'
+    form_class = CustomPasswordChangeForm
+    success_url = reverse_lazy('profile')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Contraseña actualizada.')
+        return super().form_valid(form)
+
+
+@login_required
+def dismiss_tutorial(request):
+    if request.method != 'POST':
+        return redirect('home')
+    request.session['onboarding_done'] = True
+    request.session['show_tutorial'] = False
+    return redirect(request.META.get('HTTP_REFERER', 'home'))

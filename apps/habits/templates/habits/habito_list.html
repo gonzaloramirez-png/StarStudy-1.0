@@ -14,11 +14,12 @@
                 {% if habits %}
                 <div class="list-group list-group-flush">
                     {% for habit in habits %}
-                    <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2 border-start border-4 border-{{ habit.color }}">
                         <div style="min-width: 0;">
-                            <strong>{{ habit.title }}</strong>
+                            <strong class="me-2">{{ habit.title }}</strong>
+                            <span class="badge text-bg-{{ habit.color }}"><i class="bi {{ habit.icon }} me-1"></i>{{ habit.category_label }}</span>
                             <div class="mt-1 d-flex flex-wrap align-items-center gap-1">
-                                <span class="badge text-bg-primary">Nv. {{ habit.level }}</span>
+                                <span class="badge text-bg-secondary">Nv. {{ habit.level }}</span>
                                 <small class="text-muted">{{ habit.start_time|time:'H:i' }} - {{ habit.end_time|time:'H:i' }}</small>
                                 <small class="text-muted">{{ habit.total_completions }} completado{{ habit.total_completions|pluralize:'s' }}</small>
                             </div>

@@ -35,3 +35,12 @@ Thumbs.db
 
 # Scheduler db (APScheduler)
 apscheduler.db
+
+# Backups
+backups/
+
+# Avatars
+media/avatars/
+
+# OpenCode
+.omo/

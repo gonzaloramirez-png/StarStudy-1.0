@@ -1,0 +1,200 @@
+{% if tasks %}
+
+{% if user_role == 'PROGRAMMER' %}
+
+<div>
+    {% for task in tasks %}
+
+    {% if task.importance == 'CRITICAL' and not task.is_completed and task.deadline <= urgent_date %}
+    <div class="mission-card mission-urgent">
+    {% elif task.importance == 'CRITICAL' %}
+    <div class="mission-card mission-critical">
+    {% elif task.importance == 'HIGH' and not task.is_completed and task.deadline <= urgent_date %}
+    <div class="mission-card mission-urgent">
+    {% elif task.importance == 'HIGH' %}
+    <div class="mission-card mission-high">
+    {% elif task.importance == 'MEDIUM' %}
+    <div class="mission-card mission-medium">
+    {% elif task.is_completed %}
+    <div class="mission-card mission-complete">
+    {% else %}
+    <div class="mission-card mission-low">
+    {% endif %}
+
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+            <div style="min-width: 0;">
+                <div class="d-flex flex-wrap align-items-center gap-1 gap-sm-2 mb-1">
+                    {% if task.importance == 'CRITICAL' and not task.is_completed and task.deadline <= urgent_date %}
+                        <span class="mission-level" style="background: rgba(255, 145, 0, 0.2); border-color: #ff9100; color: #ff9100;">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>URGENTE
+                        </span>
+                    {% endif %}
+                    <span class="mission-level">
+                        {% if task.importance == 'CRITICAL' %}S
+                        {% elif task.importance == 'HIGH' %}A
+                        {% elif task.importance == 'MEDIUM' %}B
+                        {% else %}C
+                        {% endif %}
+                    </span>
+                    {% if task.is_completed %}
+                    <span class="mission-level" style="background: rgba(102, 187, 106, 0.2); border-color: #66bb6a; color: #66bb6a;">
+                        <i class="bi bi-check-circle me-1"></i>Completada
+                    </span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'task_detail' task.pk %}" class="text-decoration-none" style="color: #e0e0e0; font-weight: 600;">
+                    {{ task.title }}
+                </a>
+                <br>
+                <small class="text-muted">
+                    {% if is_personal %}
+                        {{ task.deadline|date:'d/m/Y H:i' }}
+                    {% elif can_assign %}
+                        {{ task.assigned_to.get_full_name|default:task.assigned_to.email }} | {{ task.deadline|date:'d/m/Y H:i' }}
+                    {% else %}
+                        {{ task.assigned_by.get_full_name|default:task.assigned_by.email }} | {{ task.deadline|date:'d/m/Y H:i' }}
+                    {% endif %}
+                </small>
+                <div class="mission-xp-bar">
+                    <div class="mission-xp-bar-fill" style="width: {% if task.importance == 'CRITICAL' %}100{% elif task.importance == 'HIGH' %}75{% elif task.importance == 'MEDIUM' %}50{% else %}25{% endif %}%; background: {% if task.importance == 'CRITICAL' and not task.is_completed and task.deadline <= urgent_date %}#ff9100{% elif task.importance == 'CRITICAL' %}#ff1744{% elif task.importance == 'HIGH' %}#ffd54f{% elif task.importance == 'MEDIUM' %}#42a5f5{% else %}#66bb6a{% endif %};"></div>
+                </div>
+            </div>
+            <div class="d-flex gap-1 flex-shrink-0">
+                {% include 'tasks/_task_actions.html' with task=task %}
+            </div>
+        </div>
+
+    </div>
+
+    {% endfor %}
+</div>
+
+{% else %}
+
+<div class="list-group">
+    {% for task in tasks %}
+
+    {% if task.is_completed %}
+    <div class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2 list-group-item-success">
+    {% elif task.deadline < now %}
+    <div class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2 list-group-item-danger">
+    {% elif not task.is_completed and task.deadline <= urgent_date and task.importance == 'HIGH' %}
+    <div class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2" style="border-left: 4px solid #ff9100;">
+    {% elif not task.is_completed and task.deadline <= urgent_date and task.importance == 'CRITICAL' %}
+    <div class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2" style="border-left: 4px solid #ff9100;">
+    {% else %}
+    <div class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2">
+    {% endif %}
+
+        <div style="min-width: 0;">
+            {% if task.importance == 'CRITICAL' %}
+                <span class="badge bg-danger me-2">Crítica</span>
+            {% elif task.importance == 'HIGH' %}
+                <span class="badge bg-warning text-dark me-2">Alta</span>
+            {% elif task.importance == 'MEDIUM' %}
+                <span class="badge bg-info text-dark me-2">Media</span>
+            {% else %}
+                <span class="badge bg-success me-2">Baja</span>
+            {% endif %}
+
+            {% if not task.is_completed and task.deadline <= urgent_date %}
+                {% if task.importance == 'HIGH' or task.importance == 'CRITICAL' %}
+                <span class="badge bg-warning text-dark me-1">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Urgente
+                </span>
+                {% endif %}
+            {% endif %}
+
+            <a href="{% url 'task_detail' task.pk %}" class="text-decoration-none">
+                {{ task.title }}
+            </a>
+
+            {% if task.is_completed %}
+                <span class="badge bg-success ms-1">Hecho</span>
+            {% endif %}
+
+            <br>
+
+            <small class="text-muted">
+                {% if is_personal %}
+                    {{ task.deadline|date:'d/m/Y H:i' }}
+                {% elif can_assign %}
+                    Para: {{ task.assigned_to.get_full_name|default:task.assigned_to.email }} | {{ task.deadline|date:'d/m/Y H:i' }}
+                {% else %}
+                    De: {{ task.assigned_by.get_full_name|default:task.assigned_by.email }} | {{ task.deadline|date:'d/m/Y H:i' }}
+                {% endif %}
+            </small>
+        </div>
+
+        <div class="d-flex gap-1 flex-shrink-0">
+            {% include 'tasks/_task_actions.html' with task=task %}
+        </div>
+
+    </div>
+
+    {% endfor %}
+</div>
+
+{% endif %}
+
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if tasks.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="{{ request.path }}?page=1{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-get="{{ request.path }}?page=1{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-target="#task-list-container" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#task-list-indicator">&laquo;</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link"
+               href="{{ request.path }}?page={{ tasks.previous_page_number }}{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-get="{{ request.path }}?page={{ tasks.previous_page_number }}{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-target="#task-list-container" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#task-list-indicator">&lsaquo;</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Pág. {{ tasks.number }} de {{ tasks.paginator.num_pages }}</span>
+        </li>
+        {% if tasks.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="{{ request.path }}?page={{ tasks.next_page_number }}{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-get="{{ request.path }}?page={{ tasks.next_page_number }}{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-target="#task-list-container" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#task-list-indicator">&rsaquo;</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link"
+               href="{{ request.path }}?page={{ tasks.paginator.num_pages }}{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-get="{{ request.path }}?page={{ tasks.paginator.num_pages }}{% if request.GET.importance %}&importance={{ request.GET.importance }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+               hx-target="#task-list-container" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#task-list-indicator">&raquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<div id="task-list-indicator" class="text-center py-2 htmx-indicator" aria-live="polite">
+    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+</div>
+
+{% else %}
+
+<div class="empty-state">
+    <i class="bi bi-clipboard-check"></i>
+    <h5>No hay tareas</h5>
+    <p>No se encontraron tareas con los filtros actuales.</p>
+    {% if can_assign %}
+    <button type="button" class="btn btn-primary btn-sm"
+            hx-get="{% url 'task_create' %}{% if is_personal %}?personal=1{% endif %}"
+            hx-target="#task-modal-container"
+            hx-swap="innerHTML">
+        <i class="bi bi-plus-lg me-1"></i>Crear tarea
+    </button>
+    {% endif %}
+</div>
+
+<div id="task-list-indicator" class="text-center py-2 htmx-indicator" aria-live="polite">
+    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+</div>
+
+{% endif %}

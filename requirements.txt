@@ -8,3 +8,5 @@ gunicorn
 psycopg2-binary
 psutil
 whitenoise
+pillow==12.3.0
+django-health-check==3.24.0

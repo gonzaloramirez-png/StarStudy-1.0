@@ -5,7 +5,9 @@ from .models import Habit, HabitCompletion
 
 @admin.register(Habit)
 class HabitAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'level', 'created_at']
+    list_display = ['title', 'user', 'category', 'level', 'created_at']
+    list_filter = ['category']
+    search_fields = ['title', 'user__email']
 
 
 @admin.register(HabitCompletion)

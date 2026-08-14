@@ -1,0 +1,57 @@
+{% for c in comments %}
+<div class="mb-2 pb-2" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <strong style="color: var(--accent); font-size: 0.85rem;">
+        {{ c.user.get_full_name|default:c.user.email }}
+    </strong>
+    <small class="text-muted ms-2">{{ c.created_at|date:'d/m/Y H:i' }}</small>
+    <p class="mb-0 mt-1">{{ c.text }}</p>
+</div>
+{% empty %}
+<div class="empty-state py-3">
+    <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+    <p class="mb-0">No hay comentarios todavía. Sé el primero en comentar.</p>
+</div>
+{% endfor %}
+
+{% if comments.paginator.num_pages > 1 %}
+<nav>
+    <ul class="pagination pagination-sm justify-content-center">
+        {% if comments.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?comment_page={{ comments.previous_page_number }}"
+               hx-get="{{ request.path }}?comment_page={{ comments.previous_page_number }}"
+               hx-target="#comments-container"
+               hx-swap="innerHTML">&lsaquo;</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">{{ comments.number }}/{{ comments.paginator.num_pages }}</span>
+        </li>
+        {% if comments.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?comment_page={{ comments.next_page_number }}"
+               hx-get="{{ request.path }}?comment_page={{ comments.next_page_number }}"
+               hx-target="#comments-container"
+               hx-swap="innerHTML">&rsaquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<form method="post" action="{% url 'comment_create' task.pk %}"
+      hx-post="{% url 'comment_create' task.pk %}"
+      hx-target="#comments-container"
+      hx-swap="innerHTML"
+      class="mt-3">
+    {% csrf_token %}
+    {% if form.text.errors %}
+    <div class="text-danger small mb-1">
+        {% for error in form.text.errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    {{ form.text }}
+    <button type="submit" class="btn btn-primary btn-sm mt-2">Comentar</button>
+</form>

@@ -51,8 +51,11 @@ def habito_create(request):
         title = request.POST.get('title', '').strip()
         start_time = request.POST.get('start_time', '').strip()
         end_time = request.POST.get('end_time', '').strip()
+        category = request.POST.get('category', '').strip()
         if title and start_time and end_time:
-            create_habit(request.user, title, start_time, end_time)
+            if category not in Habit.Category.values:
+                category = Habit.Category.ESSENTIAL
+            create_habit(request.user, title, start_time, end_time, category)
             messages.success(request, f'Hábito "{title}" creado.')
             return redirect('habito_list')
         else:

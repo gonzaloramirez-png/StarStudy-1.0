@@ -1,0 +1,46 @@
+<div class="d-md-none">
+    <div class="accordion schedule-cards" id="scheduleCards">
+        {% for group in day_groups %}
+        <div class="accordion-item mb-2">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#dayCollapse{{ forloop.counter0 }}" aria-expanded="false"
+                        aria-controls="dayCollapse{{ forloop.counter0 }}">
+                    <span class="d-flex justify-content-between w-100 pe-2">
+                        <span><i class="bi bi-calendar-day me-2" aria-hidden="true"></i>{{ group.day.label }}</span>
+                        {% if group.entries %}
+                        <span class="badge text-bg-primary ms-2">{{ group.entries|length }}</span>
+                        {% endif %}
+                    </span>
+                </button>
+            </h2>
+            <div id="dayCollapse{{ forloop.counter0 }}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    {% for e in group.entries %}
+                    <div class="schedule-mobile-entry entry entry-{{ e.entry_type|lower }}" role="button" tabindex="0"
+                         data-bs-toggle="modal" data-bs-target="#entryModal{{ e.pk }}"
+                         aria-label="Ver detalle de {{ e.title }}" onkeydown="if(event.key==='Enter'||event.key===' '){this.click();}">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <strong>{{ e.title }}</strong>
+                                <small class="d-block">{{ e.start_time|time:'H:i' }} – {{ e.end_time|time:'H:i' }}</small>
+                            </div>
+                            {% if not readonly %}
+                            <form method="post" class="d-inline" onsubmit="event.stopPropagation();">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_id" value="{{ e.pk }}">
+                                <button type="submit" class="btn-del" aria-label="Eliminar {{ e.title }}"
+                                        onclick="event.stopPropagation(); return confirm('¿Eliminar?')">&times;</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small mb-0">No hay entradas este día.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

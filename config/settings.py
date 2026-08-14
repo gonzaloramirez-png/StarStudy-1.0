@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'apps.courses',
     'apps.gamification',
     'apps.dev',
+    'health_check',
 ]
 
 # Seguridad - Valores por defecto seguros para producción

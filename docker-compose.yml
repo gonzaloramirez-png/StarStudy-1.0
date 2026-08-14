@@ -1,0 +1,172 @@
+# ========================================
+# StarStudy - Docker Compose (producción)
+# ========================================
+# Servicios:
+#   - db: PostgreSQL 16
+#   - redis: Redis 7 (cache + Celery broker)
+#   - web: Gunicorn (Django)
+#   - celery: Worker para tareas asíncronas
+#   - celery-beat: Scheduler periódico
+#   - nginx: Reverse proxy + static/media + SSL termination
+#
+# Uso:
+#   docker compose -f docker-compose.yml --env-file .env up -d --build
+#   docker compose logs -f web
+# ========================================
+
+version: "3.9"
+
+services:
+  # ----------------------------------------
+  # Base de datos PostgreSQL
+  # ----------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: starstudy_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-starstudy}
+      POSTGRES_USER: ${DB_USER:-starstudy}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-starstudy} -d ${DB_NAME:-starstudy}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - starstudy-net
+
+  # ----------------------------------------
+  # Redis (cache + broker Celery)
+  # ----------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: starstudy_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - starstudy-net
+
+  # ----------------------------------------
+  # Aplicación Django (Gunicorn)
+  # ----------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: starstudy_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Sobrescribes para compose
+      DATABASE_URL: postgres://${DB_USER:-starstudy}:${DB_PASSWORD}@db:5432/${DB_NAME:-starstudy}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - mediadata:/app/media
+    networks:
+      - starstudy-net
+    # Gunicorn command definido en entrypoint.sh
+
+  # ----------------------------------------
+  # Celery Worker
+  # ----------------------------------------
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: starstudy_celery
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-starstudy}:${DB_PASSWORD}@db:5432/${DB_NAME:-starstudy}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    command: celery -A config worker -l INFO --concurrency=4
+    volumes:
+      - mediadata:/app/media
+    networks:
+      - starstudy-net
+
+  # ----------------------------------------
+  # Celery Beat (scheduler)
+  # ----------------------------------------
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: starstudy_celery_beat
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-starstudy}:${DB_PASSWORD}@db:5432/${DB_NAME:-starstudy}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    command: celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - mediadata:/app/media
+    networks:
+      - starstudy-net
+
+  # ----------------------------------------
+  # Nginx (reverse proxy + static/media + SSL)
+  # ----------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: starstudy_nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+      - staticdata:/app/staticfiles:ro
+      - mediadata:/app/media:ro
+    networks:
+      - starstudy-net
+
+# ----------------------------------------
+# Volúmenes persistentes
+# ----------------------------------------
+volumes:
+  pgdata:
+  redisdata:
+  staticdata:
+  mediadata:
+
+# ----------------------------------------
+# Red aislada
+# ----------------------------------------
+networks:
+  starstudy-net:
+    driver: bridge
