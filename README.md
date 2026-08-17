@@ -647,7 +647,10 @@ Uso educativo. Este proyecto fue desarrollado como parte de un proyecto académi
 
 ## Equipo
 
-Desarrollado por [gonzaloramirez-png](https://github.com/gonzaloramirez-png) [dominic-dev](https://github.com/hyuu-suu)
+| Desarrollado por | 
+|---|---|---|
+| [gonzaloramirez-png](https://github.com/gonzaloramirez-png) | 
+| [dominic-dev](https://github.com/hyuu-suu) |
 
 ---
 
