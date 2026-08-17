@@ -441,7 +441,7 @@ StarStudy-1.0/
 | Corregir tareas (scoring) | ❌ | ✅ | ❌ | ❌ |
 | Horario personal | ✅ | ✅ | ✅ | ✅ |
 | Horario de curso (CRUD) | ❌ | ✅ | ❌ | ❌ |
-| Ver horario del curso | ✅** | ❌ | ❌ | ✅ |
+| Ver horario del curso | ✅| ❌ | ❌ | ✅ |
 | Sistema de hábitos | ❌ | ❌ | ✅ | ❌ |
 | Conectar GitHub | ❌ | ❌ | ❌ | ✅ |
 | Vincular con profesor | ✅ | ❌ | ❌ | ❌ |
