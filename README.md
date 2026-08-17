@@ -648,8 +648,8 @@ Uso educativo. Este proyecto fue desarrollado como parte de un proyecto académi
 ## Equipo
 
 Desarrollado por 
-[gonzaloramirez-png](https://github.com/gonzaloramirez-png)
-[dominic](https://github.com/hyuu-suu)
+Gonzalo [gonzaloramirez-png](https://github.com/gonzaloramirez-png)
+Dominic [dominic](https://github.com/hyuu-suu)
 ---
 
 <p align="center">
