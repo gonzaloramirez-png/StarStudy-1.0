@@ -1,15 +1,23 @@
 """Tests de tasks: asignación, completado, XP, notificaciones y recordatorios."""
-from django.test import TestCase
-from django.test import override_settings
-from django.contrib.auth import get_user_model
-from django.core import mail
-from django.urls import reverse
-from django.utils import timezone
 from datetime import timedelta
 
-from apps.tasks.models import Task, Comment
+from django.contrib.auth import get_user_model
+from django.core import mail
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from django.utils import timezone
+
 from apps.accounts.models import Notification
-from apps.tasks.services import send_task_reminders
+from apps.tasks.forms import TaskForm
+from apps.tasks.models import Task, Comment
+from apps.tasks.services import (
+    add_comment,
+    apply_filters,
+    complete_task,
+    create_task,
+    get_task_queryset,
+    send_task_reminders,
+)
 from apps.tasks.tasks import send_task_deadline_reminders
 
 User = get_user_model()
@@ -241,3 +249,179 @@ class TaskReminderTests(TestCase):
         result = send_task_deadline_reminders.delay()
         self.assertEqual(result.get(), 1)
         self.assertEqual(len(mail.outbox), 1)
+
+
+class TaskServiceTests(TestCase):
+    def setUp(self):
+        self.teacher = make_user(email='ts-svc@t.local', role='TEACHER')
+        self.student = make_user(email='ts-svc2@t.local', role='STUDENT')
+
+    def test_get_task_queryset_teacher(self):
+        Task.objects.create(title='T1', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        qs = get_task_queryset(self.teacher, is_personal=False)
+        self.assertEqual(qs.count(), 1)
+
+    def test_get_task_queryset_student(self):
+        Task.objects.create(title='T2', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        qs = get_task_queryset(self.student, is_personal=False)
+        self.assertEqual(qs.count(), 1)
+
+    def test_apply_filters_importance(self):
+        qs = Task.objects.filter(assigned_to=self.student)
+        Task.objects.create(title='Low', importance='LOW', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        Task.objects.create(title='High', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        filtered = apply_filters(qs, importance='HIGH')
+        self.assertEqual(filtered.count(), 1)
+
+    def test_apply_filters_status_pending(self):
+        Task.objects.create(title='Done', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student, is_completed=True)
+        Task.objects.create(title='Pending', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        qs = Task.objects.filter(assigned_to=self.student)
+        filtered = apply_filters(qs, status='pending')
+        self.assertEqual(filtered.count(), 1)
+
+    def test_apply_filters_status_completed(self):
+        Task.objects.create(title='Done', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student, is_completed=True)
+        qs = Task.objects.filter(assigned_to=self.student)
+        filtered = apply_filters(qs, status='completed')
+        self.assertEqual(filtered.count(), 1)
+
+    def test_apply_filters_status_overdue(self):
+        Task.objects.create(title='Overdue', importance='HIGH', deadline=timezone.now() - timedelta(hours=1), assigned_by=self.teacher, assigned_to=self.student)
+        qs = Task.objects.filter(assigned_to=self.student)
+        filtered = apply_filters(qs, status='overdue', now=timezone.now())
+        self.assertEqual(filtered.count(), 1)
+
+    def test_add_comment(self):
+        task = Task.objects.create(title='Con comment', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        comment = add_comment(task, self.student, 'Hola')
+        self.assertIsNotNone(comment.pk)
+
+    def test_create_task(self):
+        form_data = {
+            'title': 'Nueva',
+            'importance': 'MEDIUM',
+            'deadline': (timezone.now() + timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),
+            'assigned_to': self.student.pk,
+        }
+        form = TaskForm(data=form_data, user=self.teacher)
+        self.assertTrue(form.is_valid())
+        task = create_task(form, self.teacher)
+        self.assertIsNotNone(task.pk)
+        self.assertFalse(task.is_completed)
+
+    def test_complete_task(self):
+        task = Task.objects.create(title='Completar', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        result = complete_task(task, self.student)
+        self.assertIsNotNone(result)
+        task.refresh_from_db()
+        self.assertTrue(task.is_completed)
+        self.assertIsNotNone(task.completed_at)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_send_task_reminders(self):
+        Task.objects.create(title='Vence', importance='HIGH', deadline=timezone.now() + timedelta(hours=6), assigned_by=self.teacher, assigned_to=self.student)
+        sent = send_task_reminders()
+        self.assertEqual(sent, 1)
+
+
+class TaskViewTests(TestCase):
+    def setUp(self):
+        self.teacher = make_user(email='views-profe@t.local', role='TEACHER')
+        self.student = make_user(email='views-alumno@t.local', role='STUDENT')
+        self.client.force_login(self.teacher)
+
+    def test_task_list(self):
+        response = self.client.get(reverse('task_list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_task_personal(self):
+        self.client.force_login(self.teacher)
+        response = self.client.get(reverse('task_personal'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_task_detail(self):
+        self.client.force_login(self.teacher)
+        task = Task.objects.create(title='Detalle', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        response = self.client.get(reverse('task_detail', args=[task.pk]))
+        self.assertEqual(response.status_code, 200)
+
+    def test_task_create_get(self):
+        self.client.force_login(self.teacher)
+        response = self.client.get(reverse('task_create'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_task_create_post(self):
+        response = self.client.post(reverse('task_create'), {
+            'title': 'Tarea desde test',
+            'importance': 'HIGH',
+            'deadline': (timezone.now() + timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),
+            'assigned_to': self.student.pk,
+        })
+        self.assertIn(response.status_code, [200, 302])
+        self.assertTrue(Task.objects.filter(title='Tarea desde test').exists())
+
+    def test_task_complete(self):
+        self.client.force_login(self.student)
+        task = Task.objects.create(title='Completar', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        response = self.client.post(reverse('task_complete', args=[task.pk]))
+        self.assertIn(response.status_code, [200, 302])
+        task.refresh_from_db()
+        self.assertTrue(task.is_completed)
+
+    def test_task_complete_view(self):
+        task = Task.objects.create(title='Vista completar', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        response = self.client.post(reverse('task_complete', args=[task.pk]))
+        self.assertIn(response.status_code, [200, 302])
+        task.refresh_from_db()
+        self.assertTrue(task.is_completed)
+
+    def test_task_delete(self):
+        self.client.force_login(self.teacher)
+        task = Task.objects.create(title='Eliminar', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        response = self.client.post(reverse('task_delete', args=[task.pk]))
+        self.assertIn(response.status_code, [200, 302])
+        self.assertFalse(Task.objects.filter(pk=task.pk).exists())
+
+    def test_comment_create(self):
+        self.client.force_login(self.student)
+        task = Task.objects.create(title='Comentar', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        response = self.client.post(reverse('comment_create', args=[task.pk]), {'text': 'Comentario'})
+        self.assertIn(response.status_code, [200, 302])
+        self.assertTrue(Comment.objects.filter(task=task).exists())
+
+
+class TaskModelTests(TestCase):
+    def setUp(self):
+        self.teacher = make_user(email='profe@t.local', role='TEACHER')
+        self.student = make_user(email='alumno@t.local', role='STUDENT')
+
+    def test_task_str(self):
+        task = Task.objects.create(title='Tarea', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        self.assertIn('Tarea', str(task))
+
+    def test_task_orden_por_importancia(self):
+        Task.objects.create(title='Low', importance='LOW', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        Task.objects.create(title='Critical', importance='CRITICAL', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        Task.objects.create(title='High', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+        tasks = list(Task.objects.all().values_list('title', flat=True))
+        self.assertEqual(tasks[0], 'Critical')
+        self.assertEqual(tasks[1], 'High')
+        self.assertEqual(tasks[2], 'Low')
+
+
+class CommentTests(TestCase):
+    def setUp(self):
+        self.teacher = make_user(email='com@t.local', role='TEACHER')
+        self.student = make_user(email='com2@t.local', role='STUDENT')
+        self.task = Task.objects.create(title='Con comentarios', importance='HIGH', deadline=timezone.now(), assigned_by=self.teacher, assigned_to=self.student)
+
+    def test_comment_str(self):
+        comment = Comment.objects.create(task=self.task, user=self.student, text='Hola')
+        self.assertIn('Hola', str(comment))
+
+
+class CeleryTaskTests(TestCase):
+    def test_send_task_deadline_reminders(self):
+        result = send_task_deadline_reminders()
+        self.assertIsInstance(result, int)

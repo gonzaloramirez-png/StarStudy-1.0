@@ -121,6 +121,11 @@ class CourseCode(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = generate_course_code()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.course.name} - {self.code} ({self.get_status_display()})"
 

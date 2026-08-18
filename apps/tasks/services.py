@@ -99,3 +99,32 @@ def add_comment(task, user, text):
         user=user,
         text=text,
     )
+
+
+def send_task_reminders():
+    """Envía recordatorios de tareas que vencen en la próxima hora."""
+    from django.core.mail import send_mail
+    from django.conf import settings
+    from django.utils import timezone
+    from datetime import timedelta
+
+    now = timezone.now()
+    soon = now + timedelta(hours=1)
+    tasks = Task.objects.filter(
+        is_completed=False,
+        deadline__gte=now,
+        deadline__lte=soon,
+    ).select_related('assigned_to')
+
+    sent = 0
+    for task in tasks:
+        if task.assigned_to.email:
+            send_mail(
+                subject=f'Recordatorio: {task.title} vence pronto',
+                message=f'La tarea "{task.title}" vence el {task.deadline:%d/%m/%Y %H:%M}.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[task.assigned_to.email],
+                fail_silently=True,
+            )
+            sent += 1
+    return sent

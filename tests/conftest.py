@@ -22,28 +22,28 @@ def django_db_setup(django_db_setup, django_db_blocker):
 @pytest.fixture
 def user(db):
     """Usuario estudiante genérico."""
-    from apps.accounts.tests import make_user
+    from tests.helpers import make_user
     return make_user()
 
 
 @pytest.fixture
 def teacher(db):
     """Usuario profesor genérico."""
-    from apps.accounts.tests import make_user
+    from tests.helpers import make_user
     return make_user(role='TEACHER')
 
 
 @pytest.fixture
 def staff(db):
     """Usuario personal genérico."""
-    from apps.accounts.tests import make_user
+    from tests.helpers import make_user
     return make_user(role='STAFF')
 
 
 @pytest.fixture
 def programmer(db):
     """Usuario programador genérico."""
-    from apps.accounts.tests import make_user
+    from tests.helpers import make_user
     return make_user(role='PROGRAMMER')
 
 
